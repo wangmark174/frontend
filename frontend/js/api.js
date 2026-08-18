@@ -1,127 +1,54 @@
-// =========================================================
-// API CONFIGURATION
-// =========================================================
+// API connection to the live Python backend
+const API_BASE_URL = "https://python2-nr3e.onrender.com";
 
-const API_URL = "http://127.0.0.1:8000";
-
-
-// =========================================================
-// GENERIC API REQUEST
-// =========================================================
-
+// Generic API request helper
 async function apiRequest(endpoint, options = {}) {
-
-    const response = await fetch(
-        `${API_URL}${endpoint}`,
-        {
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
-
             headers: {
                 "Content-Type": "application/json",
                 ...(options.headers || {})
             }
+        });
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
         }
-    );
 
-
-    let data = null;
-
-    try {
-
-        data = await response.json();
-
-    } catch {
-
-        data = null;
-
+        return await response.json();
+    } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
     }
-
-
-    if (!response.ok) {
-
-        const errorMessage =
-            data?.detail ||
-            `Request failed with status ${response.status}`;
-
-        throw new Error(errorMessage);
-
-    }
-
-
-    return data;
 }
 
-
-// =========================================================
-// DASHBOARD
-// =========================================================
-
-async function getDashboardData() {
-
-    return await apiRequest(
-        "/api/dashboard/summary"
-    );
-
+// GET request
+async function apiGet(endpoint) {
+    return apiRequest(endpoint, {
+        method: "GET"
+    });
 }
 
-
-// =========================================================
-// PRODUCTS
-// =========================================================
-
-async function getProducts() {
-
-    return await apiRequest(
-        "/api/products/"
-    );
-
+// POST request
+async function apiPost(endpoint, data = {}) {
+    return apiRequest(endpoint, {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
 }
 
-
-// =========================================================
-// SALES
-// =========================================================
-
-async function createSale(sale) {
-
-    return await apiRequest(
-        "/api/sales/",
-        {
-            method: "POST",
-
-            body: JSON.stringify(sale)
-        }
-    );
-
+// PUT request
+async function apiPut(endpoint, data = {}) {
+    return apiRequest(endpoint, {
+        method: "PUT",
+        body: JSON.stringify(data)
+    });
 }
 
-
-// =========================================================
-// EXPENSES
-// =========================================================
-
-async function createExpense(expense) {
-
-    return await apiRequest(
-        "/api/expenses/",
-        {
-            method: "POST",
-
-            body: JSON.stringify(expense)
-        }
-    );
-
-}
-
-
-// =========================================================
-// GET EXPENSES
-// =========================================================
-
-async function getExpenses() {
-
-    return await apiRequest(
-        "/api/expenses/"
-    );
-
+// DELETE request
+async function apiDelete(endpoint) {
+    return apiRequest(endpoint, {
+        method: "DELETE"
+    });
 }
