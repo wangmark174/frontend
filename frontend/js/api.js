@@ -1,54 +1,164 @@
-// API connection to the live Python backend
+// =========================================================
+// BIZANALYTICS API CONNECTION
+// =========================================================
+
 const API_BASE_URL = "https://python2-nr3e.onrender.com";
 
-// Generic API request helper
+
+// =========================================================
+// GENERIC REQUEST
+// =========================================================
+
 async function apiRequest(endpoint, options = {}) {
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+
+    const response = await fetch(
+        `${API_BASE_URL}${endpoint}`,
+        {
             ...options,
+
             headers: {
                 "Content-Type": "application/json",
                 ...(options.headers || {})
             }
-        });
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
         }
+    );
 
-        return await response.json();
-    } catch (error) {
-        console.error("API request failed:", error);
-        throw error;
+
+    let data;
+
+    try {
+
+        data = await response.json();
+
     }
+
+    catch {
+
+        data = {};
+
+    }
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.detail ||
+            data.message ||
+            `Server error: ${response.status}`
+        );
+
+    }
+
+
+    return data;
+
 }
 
-// GET request
-async function apiGet(endpoint) {
-    return apiRequest(endpoint, {
-        method: "GET"
-    });
+
+// =========================================================
+// GET DASHBOARD DATA
+// =========================================================
+
+async function getDashboardData() {
+
+    return await apiRequest(
+        "/dashboard"
+    );
+
 }
 
-// POST request
-async function apiPost(endpoint, data = {}) {
-    return apiRequest(endpoint, {
-        method: "POST",
-        body: JSON.stringify(data)
-    });
+
+// =========================================================
+// GET PRODUCTS
+// =========================================================
+
+async function getProducts() {
+
+    return await apiRequest(
+        "/products"
+    );
+
 }
 
-// PUT request
-async function apiPut(endpoint, data = {}) {
-    return apiRequest(endpoint, {
-        method: "PUT",
-        body: JSON.stringify(data)
-    });
+
+// =========================================================
+// CREATE SALE
+// =========================================================
+
+async function createSale(sale) {
+
+    return await apiRequest(
+        "/sales",
+        {
+            method: "POST",
+
+            body: JSON.stringify(sale)
+        }
+    );
+
 }
 
-// DELETE request
-async function apiDelete(endpoint) {
-    return apiRequest(endpoint, {
-        method: "DELETE"
-    });
+
+// =========================================================
+// CREATE EXPENSE
+// =========================================================
+
+async function createExpense(expense) {
+
+    return await apiRequest(
+        "/expenses",
+        {
+            method: "POST",
+
+            body: JSON.stringify(expense)
+        }
+    );
+
 }
+
+
+// =========================================================
+// TEST API CONNECTION
+// =========================================================
+
+async function testAPI() {
+
+    try {
+
+        const response =
+            await fetch(API_BASE_URL);
+
+        const data =
+            await response.json();
+
+        console.log(
+            "BizAnalytics API:",
+            data
+        );
+
+        return data;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "API connection failed:",
+            error
+        );
+
+        return null;
+
+    }
+
+}
+
+
+// =========================================================
+// API LOADED
+// =========================================================
+
+console.log(
+    "BizAnalytics API connected:",
+    API_BASE_URL
+);
