@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizAnalytics — Business Management Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#2563eb;--primary-dark:#1d4ed8;--primary-light:#eff6ff;
+  --success:#16a34a;--success-light:#f0fdf4;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --warning:#d97706;--warning-light:#fffbeb;
+  --purple:#7c3aed;--bg:#f5f7fb;--card:#fff;--text:#111827;
+  --muted:#6b7280;--border:#e5e7eb;--sidebar:#111827;
+  --radius:16px;--shadow:0 10px 30px rgba(15,23,42,.07)
+}
+body.dark{
+  --bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;
+  --border:#334155;--primary-light:#172554;--success-light:#052e16;
+  --danger-light:#450a0a;--warning-light:#451a03
+}
+body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+button:focus,input:focus,select:focus,textarea:focus{outline:none}
+.hidden{display:none!important}
+
+/* LOGIN */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a,#1e3a8a);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px}
+.login-box{width:100%;max-width:430px;background:#fff;color:#111827;border-radius:24px;padding:40px;box-shadow:0 30px 80px rgba(0,0,0,.25);animation:loginIn .35s ease}
+@keyframes loginIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.login-logo{width:70px;height:70px;display:grid;place-items:center;background:#eff6ff;border-radius:20px;font-size:32px;margin-bottom:20px}
+.login-box h1{font-size:30px;margin-bottom:8px}.login-box>p{color:#6b7280;margin-bottom:28px}
+.input-group{margin-bottom:18px}.input-group label{display:block;font-size:13px;font-weight:700;color:#374151;margin-bottom:7px}
+.input-group input{width:100%;padding:13px 14px;border:1px solid #d1d5db;border-radius:10px;color:#111827;background:#fff}
+.input-group input:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.1)}
+.login-btn{width:100%;border:none;padding:14px;background:#2563eb;color:#fff;border-radius:10px;font-weight:700}
+.login-btn:hover{background:#1d4ed8}.login-error{color:#dc2626;font-size:13px;min-height:20px}
+.register-link{margin-top:18px;text-align:center;font-size:14px}.register-link span{color:#94a3b8}
+.register-link a{margin-left:6px;color:#2563eb;font-weight:600;text-decoration:none}.demo-login{display:block;text-align:center;margin-top:20px;color:#6b7280}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:var(--sidebar);color:#fff;padding:22px 15px;z-index:1000;overflow-y:auto;transition:.3s ease}
+.sidebar.mobile-open{transform:translateX(0)}
+.logo{display:flex;align-items:center;gap:12px;padding:10px 12px 30px}.logo span{width:42px;height:42px;display:grid;place-items:center;background:var(--primary);border-radius:12px;font-size:21px}.logo h2{font-size:19px}
+#mainNavigation{display:flex;flex-direction:column;gap:6px}.nav-link{text-decoration:none;color:#9ca3af;display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:11px;transition:.2s;font-weight:600}.nav-link:hover{background:rgba(255,255,255,.06);color:#fff}.nav-link.active{background:var(--primary);color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.25)}.nav-link span:first-child{font-size:19px}
+
+/* HAMBURGER & MOBILE OVERLAY */
+.hamburger-btn{display:none;border:none;background:transparent;color:var(--text);font-size:24px;padding:8px;cursor:pointer;z-index:1001}
+.hamburger-btn:hover{opacity:.7}
+.mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;backdrop-filter:blur(2px)}
+.mobile-overlay.show{display:block}
+
+/* MAIN */
+.main-content{margin-left:250px;min-height:100vh;padding:28px;transition:.3s ease}.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}.topbar-title h1{font-size:28px;letter-spacing:-.5px}.topbar-title p{color:var(--muted);margin-top:5px}.topbar-actions{display:flex;align-items:center;gap:10px}
+
+/* BUTTONS */
+.primary-btn,.expense-btn,.secondary-btn,.view-btn,.setting-button,.save-profile-btn,.expense-save-btn,.danger-btn{border:none;border-radius:10px;padding:11px 16px;font-weight:700;transition:.2s}
+.primary-btn{background:var(--primary);color:#fff;box-shadow:0 5px 15px rgba(37,99,235,.18)}.primary-btn:hover{background:var(--primary-dark);transform:translateY(-2px)}
+.expense-btn{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}.expense-btn:hover{background:#ffe4e6;transform:translateY(-2px)}
+.secondary-btn{background:#f3f4f6;color:#374151}.secondary-btn:hover{background:#e5e7eb}.view-btn{background:var(--primary-light);color:var(--primary)}.view-btn:hover{filter:brightness(.96)}.danger-btn{background:var(--danger);color:#fff}
+
+/* PROFILE BUTTON */
+.profile-btn{border:none;width:44px;height:44px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;background:var(--primary);overflow:hidden;cursor:pointer;transition:.2s;box-shadow:0 2px 8px rgba(37,99,235,.2)}.profile-btn:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(37,99,235,.3)}.profile-btn-image{width:100%;height:100%;border-radius:50%;object-fit:cover}
+
+/* PAGES */
+.page{display:none}.page.active-page{display:block;animation:pageIn .25s ease}@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:20px}.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:21px;display:flex;align-items:flex-start;gap:15px;box-shadow:var(--shadow);transition:.2s}.stat-card:hover{transform:translateY(-3px)}
+.stat-icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:22px;background:var(--primary-light)}.stat-card:nth-child(2) .stat-icon{background:var(--danger-light)}.stat-card:nth-child(3) .stat-icon{background:var(--success-light)}.stat-card:nth-child(4) .stat-icon{background:var(--warning-light)}
+.stat-card p{color:var(--muted);font-size:13px;margin-bottom:5px}.stat-card h2{font-size:21px;margin-bottom:6px;word-break:break-word}.stat-card span{font-size:12px;color:var(--muted)}.positive{color:var(--success)!important}.negative{color:var(--danger)!important}
+
+/* CARDS / CHARTS */
+.charts-grid{display:grid;grid-template-columns:1.65fr 1fr;gap:18px;margin-bottom:18px}.chart-card,.table-card,.products-card,.page-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.chart-card{padding:22px}.card-header,.page-card-header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:20px}.card-header h2,.page-card-header h2{font-size:18px}.card-header p,.page-card-header p{color:var(--muted);font-size:13px;margin-top:4px}.card-header select{padding:9px 11px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text)}.chart-container{position:relative;height:290px}.bottom-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px}.table-card,.products-card{padding:22px}
+.table-container{width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:650px}th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);background:var(--bg);padding:12px}td{padding:14px 12px;border-bottom:1px solid var(--border);font-size:13px}tbody tr:hover{background:var(--primary-light)}
+.status{display:inline-flex;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:800}.completed{background:var(--success-light);color:var(--success)}.pending{background:var(--warning-light);color:var(--warning)}.cancelled{background:var(--danger-light);color:var(--danger)}
+
+/* PRODUCTS */
+.product-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}.product-item:last-child{border-bottom:none}.product-number{width:34px;height:34px;display:grid;place-items:center;background:var(--primary-light);color:var(--primary);border-radius:10px;font-weight:800}.product-info{flex:1}.product-info h3{font-size:14px}.product-info p{color:var(--muted);font-size:12px;margin-top:3px}
+.product-box{border:1px solid var(--border);border-radius:15px;padding:20px;background:var(--card);transition:.2s;position:relative}.product-box:hover{transform:translateY(-4px);box-shadow:var(--shadow)}.product-box-icon{width:55px;height:55px;display:grid;place-items:center;background:var(--primary-light);border-radius:14px;font-size:27px;margin-bottom:15px}.product-box h3{margin-bottom:6px}.product-box p{color:var(--muted);font-size:13px;margin-bottom:13px}.product-box strong{display:block;font-size:16px;margin-bottom:10px}
+.stock{font-size:12px;font-weight:700;display:inline-block;padding:5px 8px;border-radius:20px}.stock.good{background:var(--success-light);color:var(--success)}.stock.low{background:var(--warning-light);color:var(--warning)}.stock.out{background:var(--danger-light);color:var(--danger)}.product-actions{margin-top:15px;display:flex;gap:8px}.small-btn{padding:7px 10px;border:none;border-radius:8px;font-size:12px;font-weight:700}.edit-product{background:var(--primary-light);color:var(--primary)}.delete-product{background:var(--danger-light);color:var(--danger)}
+.product-toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}.search-box{flex:1;min-width:200px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text)}.product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:17px}
+
+/* REPORTS / SETTINGS */
+.page-card{padding:25px}.page-description{color:var(--muted);margin-bottom:24px}.report-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:25px}.report-box{padding:20px;border:1px solid var(--border);border-radius:15px;background:var(--bg)}.report-box span{font-size:22px}.report-box h3{font-size:13px;color:var(--muted);margin:12px 0 6px}.report-box strong{font-size:20px}.report-box small{display:block;margin-top:7px;color:var(--muted)}.report-sections{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}.report-panel{border:1px solid var(--border);border-radius:15px;padding:20px}.report-panel h3{margin-bottom:15px}.report-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}.report-row:last-child{border-bottom:none}
+.settings-layout{display:grid;grid-template-columns:230px 1fr;gap:22px}.settings-menu{display:flex;flex-direction:column;gap:5px}.settings-tab{border:none;background:transparent;color:var(--muted);padding:12px;text-align:left;border-radius:9px;font-weight:600;cursor:pointer;transition:.2s}.settings-tab:hover{transform:translateX(4px)}.settings-tab.active,.settings-tab:hover{background:var(--primary-light);color:var(--primary)}.settings-content{min-width:0}.settings-section{display:none}.settings-section.active{display:block;animation:slideIn .25s ease}.settings-section h3{margin-bottom:6px;font-size:18px}.settings-section>p{color:var(--muted);font-size:13px;margin-bottom:20px}.settings-card{border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:15px;background:var(--card);transition:.2s}.settings-card:hover{box-shadow:0 4px 12px rgba(37,99,235,.08)}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px 0;border-bottom:1px solid var(--border)}.setting-row:first-child{padding-top:0}.setting-row:last-child{border-bottom:none;padding-bottom:0}.setting-row h4{margin-bottom:4px;font-weight:600;font-size:14px}.setting-row p{color:var(--muted);font-size:12px;margin:0}.setting-input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);font-size:14px;transition:.2s}.setting-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}.settings-form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.setting-field{display:flex;flex-direction:column}.setting-field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text)}.setting-field.full{grid-column:1/-1}@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}body.compact .settings-card{padding:14px;margin-bottom:10px}body.compact .setting-row{padding:10px 0}body.compact .settings-section h3{margin-bottom:4px;font-size:16px}body.compact .settings-form-grid{gap:10px}
+.toggle{position:relative;width:48px;height:26px;flex-shrink:0}.toggle input{opacity:0;width:0;height:0}.toggle-slider{position:absolute;inset:0;background:#d1d5db;border-radius:20px;transition:.2s}.toggle-slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}.toggle input:checked+.toggle-slider{background:var(--primary)}.toggle input:checked+.toggle-slider:before{transform:translateX(22px)}
+
+/* CUSTOM DROPDOWN */
+.product-input-wrapper{position:relative;width:100%}
+.product-dropdown-container{display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:2px solid var(--primary);border-radius:12px;margin-top:8px;max-height:380px;overflow-y:auto;overflow-x:hidden;z-index:1000;box-shadow:0 20px 50px rgba(37,99,235,.15)}
+.product-dropdown-container.show{display:flex;flex-direction:column}
+.product-dropdown-container::-webkit-scrollbar{width:8px}
+.product-dropdown-container::-webkit-scrollbar-track{background:transparent}
+.product-dropdown-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.product-dropdown-container::-webkit-scrollbar-thumb:hover{background:var(--primary)}
+.product-dropdown-item{padding:13px 15px;cursor:pointer;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);transition:.15s;background:var(--card)}
+.product-dropdown-item:last-child{border-bottom:none}
+.product-dropdown-item:hover{background:var(--primary-light);padding-left:18px}
+.product-dropdown-item.selected{background:var(--primary-light);border-left:4px solid var(--primary);padding-left:11px}
+.dropdown-item-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:8px;font-size:16px;flex-shrink:0}
+.dropdown-item-content{flex:1;min-width:0}
+.dropdown-item-name{font-weight:600;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dropdown-item-details{display:flex;gap:12px;margin-top:4px;font-size:12px;color:var(--muted)}
+.dropdown-item-category{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dropdown-item-price{font-weight:700;color:var(--primary);white-space:nowrap}
+.product-dropdown-empty{padding:30px 20px;text-align:center;color:var(--muted)}
+.product-dropdown-empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.5}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.62);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;pointer-events:none;transition:.2s;z-index:5000}.modal-overlay.show{opacity:1;visibility:visible;pointer-events:auto}.modal{width:100%;max-width:540px;max-height:calc(100vh - 40px);overflow-y:auto;background:var(--card);color:var(--text);border-radius:20px;padding:25px;box-shadow:0 30px 80px rgba(0,0,0,.3);transform:translateY(20px) scale(.97);transition:.2s}.modal-overlay.show .modal{transform:none}
+.modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:24px}.modal-header h2{font-size:21px}.modal-header p{color:var(--muted);font-size:13px;margin-top:4px}.modal-close{width:36px;height:36px;display:grid;place-items:center;border:none;background:var(--bg);color:var(--muted);border-radius:9px;font-size:22px}.modal-close:hover{background:var(--danger-light);color:var(--danger)}
+.form-group{margin-bottom:17px}.form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}.form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 13px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);resize:vertical}.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.1)}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:25px;padding-top:18px;border-top:1px solid var(--border)}.form-message{min-height:18px;color:var(--danger);font-size:12px}.expense-modal-icon{width:45px;height:45px;display:grid;place-items:center;background:var(--danger-light);border-radius:12px;font-size:22px;margin-bottom:12px}.expense-save-btn{background:#e11d48;color:#fff}.expense-save-btn:hover{background:#be123c}
+.profile-modal{max-width:700px}.profile-photo-section{text-align:center;margin-bottom:25px}.profile-photo-wrapper{width:100px;height:100px;margin:auto;position:relative}.profile-photo-wrapper img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:4px solid var(--primary-light)}.photo-upload-button{position:absolute;right:0;bottom:0;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--primary);color:#fff;cursor:pointer}.profile-photo-section p{color:var(--muted);font-size:12px;margin-top:9px}.profile-form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.profile-input-group label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}.profile-input-group input,.profile-input-group select,.profile-input-group textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text)}.full-width{grid-column:1/-1}.profile-message{color:var(--success);font-size:13px;min-height:20px;margin-top:15px}
+
+/* TOAST */
+.toast-container{position:fixed;right:22px;bottom:22px;z-index:99999;display:flex;flex-direction:column;gap:10px}.toast{min-width:280px;max-width:380px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 15px 40px rgba(0,0,0,.15);animation:toastIn .3s ease}.toast.success{border-left:4px solid var(--success)}.toast.error{border-left:4px solid var(--danger)}.toast.warning{border-left:4px solid var(--warning)}@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+
+/* RESPONSIVE */
+@media(max-width:1200px){.stats-grid{grid-template-columns:repeat(2,1fr)}.product-grid{grid-template-columns:repeat(2,1fr)}.report-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1024px){.sidebar{width:200px}.main-content{margin-left:200px}.logo h2{display:none}.logo{justify-content:center}}
+@media(max-width:900px){.sidebar{width:75px;padding:15px 10px}.logo h2,.nav-link span:last-child{display:none}.logo{justify-content:center;padding-bottom:25px}.nav-link{justify-content:center;padding:13px}.main-content{margin-left:75px}.charts-grid,.bottom-grid,.report-sections,.settings-layout{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .hamburger-btn{display:block}
+  .sidebar{position:fixed;left:0;right:0;top:0;bottom:auto;width:100%;height:auto;max-height:calc(100vh - 80px);border-radius:0;padding:0;margin-bottom:80px;transform:translateX(-100%);border-bottom:1px solid var(--border)}
+  .sidebar.mobile-open{transform:translateX(0)}
+  .logo{padding:15px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:0}
+  .logo h2{display:block;font-size:16px;margin-left:8px}
+  .logo span{width:35px;height:35px;font-size:18px}
+  #mainNavigation{flex-direction:row;flex-wrap:wrap;gap:3px;padding:0}
+  .nav-link{flex:1;min-width:45%;padding:10px;gap:8px;font-size:12px;border-radius:8px;justify-content:center;flex-direction:column;align-items:center;text-align:center}
+  .nav-link span:last-child{font-size:11px;font-weight:500;display:block}
+  .nav-link span:first-child{font-size:16px;margin-bottom:2px}
+  
+  .mobile-nav-bottom{position:fixed;bottom:0;left:0;right:0;height:70px;background:var(--card);border-top:1px solid var(--border);z-index:1002;box-shadow:0 -4px 12px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:space-around;padding:0}
+  .mobile-nav-link{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:600;flex:1;justify-content:center;border-radius:8px;transition:.2s}
+  .mobile-nav-link:hover{color:var(--text)}
+  .mobile-nav-link.active{color:var(--primary);background:var(--primary-light)}
+  .mobile-nav-link span:first-child{font-size:20px;margin-bottom:2px}
+  
+  .main-content{margin-left:0;margin-bottom:80px;padding:16px;padding-bottom:30px}
+  .topbar{align-items:center;flex-direction:row;gap:10px;margin-bottom:20px;justify-content:space-between}
+  .topbar-title{min-width:0}
+  .topbar-title h1{font-size:20px}
+  .topbar-title p{font-size:12px}
+  .topbar-actions{width:auto;gap:8px;flex-wrap:nowrap}
+  .topbar-actions button{padding:8px 12px;font-size:12px;flex:0}
+}
+@media(max-width:700px){
+  .main-content{padding:16px}.topbar{align-items:center;flex-direction:row}.topbar-actions{width:auto;flex-wrap:nowrap}.topbar-actions>button{flex:0}
+  .stats-grid,.product-grid,.report-grid{grid-template-columns:1fr}
+  .profile-form-grid,.settings-form-grid{grid-template-columns:1fr}
+  .full-width,.setting-field.full{grid-column:auto}
+  .page-card{padding:18px}
+  .page-card-header,.card-header{align-items:flex-start;flex-direction:column}
+  .modal{padding:20px;border-radius:16px;max-width:95vw}
+  .charts-grid{grid-template-columns:1fr}
+  .bottom-grid{grid-template-columns:1fr}
+  .settings-layout{grid-template-columns:1fr}
+  .settings-menu{flex-direction:row;gap:8px;margin-bottom:15px;overflow-x:auto;padding-bottom:10px}
+  .settings-tab{min-width:auto;padding:8px 12px;font-size:12px}
+  .profile-form-grid{grid-template-columns:1fr}
+  .product-grid{grid-template-columns:1fr}
+  .report-sections{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">📊</div>
+    <h1 id="authTitle">Welcome Back</h1>
+    <p id="authSubtitle">Sign in to your BizAnalytics account</p>
+
+    <form id="loginForm">
+      <div class="input-group">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="Enter username" required>
+      </div>
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter password" required>
+      </div>
+      <p id="loginError" class="login-error"></p>
+      <button class="login-btn" type="submit">Login</button>
+    </form>
+
+    <form id="registerForm" class="hidden">
+      <div class="input-group">
+        <label for="registerUsername">Username</label>
+        <input id="registerUsername" type="text" placeholder="Choose username" required>
+      </div>
+      <div class="input-group">
+        <label for="registerPassword">Password</label>
+        <input id="registerPassword" type="password" placeholder="Choose password" required>
+      </div>
+      <div class="input-group">
+        <label for="registerConfirmPassword">Confirm Password</label>
+        <input id="registerConfirmPassword" type="password" placeholder="Confirm password" required>
+      </div>
+      <p id="registerError" class="login-error"></p>
+      <button class="login-btn" type="submit">Create Account</button>
+    </form>
+
+    <div class="register-link">
+      <span id="authSwitchText">Don't have an account?</span>
+      <a href="#" id="registerLink">Register</a>
+    </div>
+    <small class="demo-login">Demo login: <strong>admin</strong> / <strong>1234</strong></small>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo"><span>📊</span><h2>BizAnalytics</h2></div>
+  <nav id="mainNavigation">
+    <a href="#dashboard" class="nav-link active" data-page="dashboard"><span>📊</span><span>Dashboard</span></a>
+    <a href="#sales" class="nav-link" data-page="sales"><span>💰</span><span>Sales</span></a>
+    <a href="#expenses" class="nav-link" data-page="expenses"><span>💸</span><span>Expenses</span></a>
+    <a href="#products" class="nav-link" data-page="products"><span>📦</span><span>Products</span></a>
+    <a href="#reports" class="nav-link" data-page="reports"><span>📈</span><span>Reports</span></a>
+    <a href="#settings" class="nav-link" data-page="settings"><span>⚙️</span><span>Settings</span></a>
+  </nav>
+</aside>
+
+<main class="main-content">
+
+<header class="topbar">
+  <button id="mobileMenuBtn" class="hamburger-btn">☰</button>
+  <div class="topbar-title">
+    <h1 id="pageTitle">Business Dashboard</h1>
+    <p id="pageSubtitle">Monitor your business performance</p>
+  </div>
+  <div class="topbar-actions">
+    <button id="addSaleBtn" class="primary-btn">+ Add Sale</button>
+    <button id="addExpenseBtn" class="expense-btn">+ Add Expense</button>
+    <button id="profileButton" class="profile-btn" title="Profile">
+      <img id="profileButtonImage" src="" alt="Profile" class="profile-btn-image">
+    </button>
+  </div>
+</header>
+
+<!-- DASHBOARD -->
+<section id="page-dashboard" class="page active-page">
+  <section class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">💰</div><div><p>Total Sales</p><h2 id="totalSales">UGX 0</h2><span class="positive">Revenue</span></div></div>
+    <div class="stat-card"><div class="stat-icon">💸</div><div><p>Total Expenses</p><h2 id="totalExpenses">UGX 0</h2><span class="negative">Business costs</span></div></div>
+    <div class="stat-card"><div class="stat-icon">📈</div><div><p>Net Profit</p><h2 id="totalProfit">UGX 0</h2><span class="positive">Revenue - expenses</span></div></div>
+    <div class="stat-card"><div class="stat-icon">📦</div><div><p>Products</p><h2 id="totalProducts">0</h2><span>Products in inventory</span></div></div>
+  </section>
+
+  <section class="charts-grid">
+    <div class="chart-card">
+      <div class="card-header"><div><h2>Sales Overview</h2><p>Your sales performance</p></div>
+        <select id="salesPeriod"><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select>
+      </div>
+      <div class="chart-container"><canvas id="salesChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header"><div><h2>Expense Breakdown</h2><p>Where your money goes</p></div></div>
+      <div class="chart-container"><canvas id="expenseChart"></canvas></div>
+    </div>
+  </section>
+
+  <section class="bottom-grid">
+    <div class="table-card">
+      <div class="card-header"><div><h2>Recent Sales</h2><p>Latest transactions</p></div><button class="view-btn" id="dashboardSalesBtn">View All</button></div>
+      <div class="table-container"><table><thead><tr><th>Product</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody id="salesTable"></tbody></table></div>
+    </div>
+    <div class="products-card">
+      <div class="card-header"><div><h2>Top Products</h2><p>Best performing products</p></div></div>
+      <div id="topProducts"></div>
+    </div>
+  </section>
+</section>
+
+<!-- SALES -->
+<section id="page-sales" class="page">
+  <div class="page-card">
+    <div class="page-card-header"><div><h2>Sales Management</h2><p>Record, monitor and manage every business sale.</p></div><button id="salesPageAddBtn" class="primary-btn">+ Add Sale</button></div>
+    <div class="product-toolbar"><input id="salesSearch" class="search-box" placeholder="Search sales by product or customer..."></div>
+    <div class="table-container"><table><thead><tr><th>Product</th><th>Customer</th><th>Quantity</th><th>Date</th><th>Amount</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead><tbody id="salesPageTable"></tbody></table></div>
+  </div>
+</section>
+
+<!-- EXPENSES -->
+<section id="page-expenses" class="page">
+  <div class="page-card">
+    <div class="page-card-header"><div><h2>Expense Management</h2><p>Track rent, stock, transport, salaries, utilities and other business expenses.</p></div><button id="expensesPageAddBtn" class="expense-btn">+ Add Expense</button></div>
+    <div class="report-grid">
+      <div class="report-box"><span>💸</span><h3>Total Expenses</h3><strong id="expensePageTotal">UGX 0</strong></div>
+      <div class="report-box"><span>📊</span><h3>Largest Category</h3><strong id="largestExpenseCategory">-</strong></div>
+    </div>
+    <div class="table-container"><table><thead><tr><th>Category</th><th>Description</th><th>Date</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensesPageTable"></tbody></table></div>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section id="page-products" class="page">
+  <div class="page-card">
+    <div class="page-card-header"><div><h2>Products & Inventory</h2><p>Monitor products, prices and available stock.</p></div><button id="addProductBtn" class="primary-btn">+ Add Product</button></div>
+    <div class="product-toolbar"><input id="productSearch" class="search-box" placeholder="Search products..."></div>
+    <div id="productGrid" class="product-grid"></div>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section id="page-reports" class="page">
+  <div class="page-card">
+    <div class="page-card-header"><div><h2>Business Reports</h2><p>Detailed financial and operational performance overview.</p></div><button id="refreshReportsBtn" class="view-btn">🔄 Refresh</button></div>
+    <div class="report-grid">
+      <div class="report-box"><span>💰</span><h3>Total Revenue</h3><strong id="reportRevenue">UGX 0</strong><small>All recorded sales</small></div>
+      <div class="report-box"><span>💸</span><h3>Total Expenses</h3><strong id="reportExpenses">UGX 0</strong><small>All business expenses</small></div>
+      <div class="report-box"><span>📈</span><h3>Net Profit</h3><strong id="reportProfit">UGX 0</strong><small id="profitMargin">Profit margin: 0%</small></div>
+      <div class="report-box"><span>🧾</span><h3>Transactions</h3><strong id="reportTransactions">0</strong><small>Total sales</small></div>
+    </div>
+    <div class="report-sections">
+      <div class="report-panel"><h3>Sales Performance</h3>
+        <div class="report-row"><span>Total sales</span><strong id="reportSaleCount">0</strong></div>
+        <div class="report-row"><span>Average sale</span><strong id="averageSale">UGX 0</strong></div>
+        <div class="report-row"><span>Completed sales</span><strong id="completedSales">0</strong></div>
+        <div class="report-row"><span>Pending sales</span><strong id="pendingSales">0</strong></div>
+        <div class="report-row"><span>Best product</span><strong id="bestProduct">-</strong></div>
+      </div>
+      <div class="report-panel"><h3>Expense Analysis</h3><div id="expenseReportList"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="page-settings" class="page">
+  <div class="page-card">
+    <div class="page-card-header"><div><h2>Settings</h2><p>Customize your account, business and dashboard preferences.</p></div></div>
+    <div class="settings-layout">
+      <div class="settings-menu">
+        <button class="settings-tab active" data-settings="businessSettings">🏢 Business</button>
+        <button class="settings-tab" data-settings="accountSettings">👤 Account</button>
+        <button class="settings-tab" data-settings="appearanceSettings">🎨 Appearance</button>
+        <button class="settings-tab" data-settings="dataSettings">💾 Data</button>
+      </div>
+      <div class="settings-content">
+
+        <div id="businessSettings" class="settings-section active">
+          <h3>Business Information</h3><p>Keep your business details up to date.</p>
+          <div class="settings-card"><div class="settings-form-grid">
+            <div class="setting-field"><label>Business Name</label><input id="settingBusinessName" class="setting-input" placeholder="My Business"></div>
+            <div class="setting-field"><label>Business Type</label><select id="settingBusinessType" class="setting-input"><option>Retail</option><option>Restaurant</option><option>Wholesale</option><option>Salon</option><option>Services</option><option>Pharmacy</option><option>Bakery</option><option>Farm</option><option>Other</option></select></div>
+            <div class="setting-field"><label>Phone</label><input id="settingPhone" class="setting-input" placeholder="+256..."></div>
+            <div class="setting-field"><label>Email</label><input id="settingEmail" class="setting-input" type="email" placeholder="business@example.com"></div>
+            <div class="setting-field"><label>Currency</label><select id="settingCurrency" class="setting-input"><option value="UGX">UGX (Ugandan Shilling)</option><option value="USD">USD (US Dollar)</option><option value="EUR">EUR (Euro)</option><option value="GBP">GBP (British Pound)</option><option value="KES">KES (Kenyan Shilling)</option></select></div>
+            <div class="setting-field"><label>Tax Rate (%)</label><input id="settingTaxRate" class="setting-input" type="number" min="0" max="50" step="0.1" placeholder="18" value="18"></div>
+            <div class="setting-field full"><label>Business Address</label><input id="settingAddress" class="setting-input" placeholder="Kampala, Uganda"></div>
+            <div class="setting-field full"><label>Business Registration Number</label><input id="settingRegNumber" class="setting-input" placeholder="TIN/Registration ID"></div>
+          </div><div style="margin-top:18px"><button id="saveBusinessSettings" class="primary-btn">💾 Save Business Settings</button></div></div>
+          <div class="settings-card"><h4 style="margin-bottom:15px">⏰ Operating Hours</h4><div class="settings-form-grid">
+            <div class="setting-field"><label>Opening Time</label><input id="settingOpeningTime" class="setting-input" type="time" value="08:00"></div>
+            <div class="setting-field"><label>Closing Time</label><input id="settingClosingTime" class="setting-input" type="time" value="17:00"></div>
+          </div></div>
+        </div>
+
+        <div id="accountSettings" class="settings-section">
+          <h3>Account Settings</h3><p>Manage your profile and account access.</p>
+          <div class="settings-card">
+            <div class="setting-row"><div><h4>👤 Profile</h4><p>Update your name, email, phone and profile photo.</p></div><button id="settingsProfileBtn" class="view-btn">Edit Profile</button></div>
+            <div class="setting-row"><div><h4>🔐 Change Password</h4><p>Update your password to keep account secure.</p></div><button id="changePasswordBtn" class="view-btn">Change Password</button></div>
+            <div class="setting-row"><div><h4>📱 Two-Factor Auth</h4><p id="twoFactorStatus">Not enabled</p></div><label class="toggle"><input type="checkbox" id="twoFactorToggle"><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><h4>🔔 Notifications</h4><p>Receive alerts for important activities.</p></div><label class="toggle"><input type="checkbox" id="notificationsToggle" checked><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><h4>📋 Session</h4><p>Sign out from this device.</p></div><button id="settingsLogoutBtn" class="danger-btn">Logout</button></div>
+          </div>
+          <div class="settings-card"><h4 style="margin-bottom:15px">📅 Activity</h4><p style="color:var(--muted);font-size:13px;margin-bottom:10px">Last login: <strong id="lastLoginTime">Today at 10:30 AM</strong></p></div>
+        </div>
+
+        <div id="appearanceSettings" class="settings-section">
+          <h3>Appearance</h3><p>Choose how BizAnalytics looks.</p>
+          <div class="settings-card">
+            <div class="setting-row"><div><h4>🌙 Dark Mode</h4><p>Use a darker interface for comfortable viewing.</p></div><label class="toggle"><input type="checkbox" id="darkModeToggle"><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><div><h4>🎨 Color Scheme</h4><p>Choose your preferred color theme.</p></div><select id="themeSelect" class="setting-input" style="width:200px"><option value="blue">Blue (Default)</option><option value="purple">Purple</option><option value="green">Green</option><option value="red">Red</option><option value="orange">Orange</option></select></div>
+            <div class="setting-row"><div><h4>📏 Font Size</h4><p>Adjust dashboard text size.</p></div><select id="fontSizeSelect" class="setting-input" style="width:200px"><option value="small">Small</option><option value="normal" selected>Normal</option><option value="large">Large</option><option value="xlarge">Extra Large</option></select></div>
+            <div class="setting-row"><div><h4>🌐 Language</h4><p>Select your preferred language.</p></div><select id="languageSelect" class="setting-input" style="width:200px"><option value="en">English</option><option value="sw">Swahili</option><option value="lg">Luganda</option></select></div>
+            <div class="setting-row"><div><h4>💡 Compact Mode</h4><p>Reduce spacing for more content.</p></div><label class="toggle"><input type="checkbox" id="compactModeToggle"><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+
+        <div id="dataSettings" class="settings-section">
+          <h3>Data Management</h3><p>Manage the information stored in your browser.</p>
+          <div class="settings-card"><h4 style="margin-bottom:15px">📊 Storage Summary</h4>
+            <div class="setting-row"><div><h4>💰 Stored Sales</h4><p id="storedSalesCount">0 sales</p></div></div>
+            <div class="setting-row"><div><h4>💸 Stored Expenses</h4><p id="storedExpensesCount">0 expenses</p></div></div>
+            <div class="setting-row"><div><h4>📦 Stored Products</h4><p id="storedProductsCount">0 products</p></div></div>
+            <div class="setting-row"><div><h4>💾 Total Storage Used</h4><p id="storageSizeInfo">Calculating...</p></div></div>
+          </div>
+          <div class="settings-card"><h4 style="margin-bottom:15px">🔄 Data Actions</h4>
+            <div class="setting-row"><div><h4>📥 Import Data</h4><p>Restore data from a backup file.</p></div><button id="importDataBtn" class="view-btn">Import</button></div>
+            <div class="setting-row"><div><h4>📤 Export Data</h4><p>Download all your business data as JSON.</p></div><button id="exportDataBtn" class="view-btn">Export</button></div>
+            <div class="setting-row"><div><h4>⚠️ Reset Data</h4><p>Delete all sales, expenses and products. This cannot be undone.</p></div><button id="resetDataBtn" class="danger-btn">Reset All Data</button></div>
+          </div>
+          <div class="settings-card"><h4 style="margin-bottom:15px">🗑️ Clear Cache</h4>
+            <p style="color:var(--muted);font-size:13px;margin-bottom:12px">Clear temporary data to improve performance.</p>
+            <button id="clearCacheBtn" class="secondary-btn">Clear Cache</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- MOBILE OVERLAY -->
+<div id="mobileOverlay" class="mobile-overlay"></div>
+
+<!-- MOBILE BOTTOM NAVIGATION -->
+<nav class="mobile-nav-bottom">
+  <a href="#dashboard" class="mobile-nav-link active" data-page="dashboard"><span>📊</span><span>Dashboard</span></a>
+  <a href="#sales" class="mobile-nav-link" data-page="sales"><span>💰</span><span>Sales</span></a>
+  <a href="#expenses" class="mobile-nav-link" data-page="expenses"><span>💸</span><span>Expenses</span></a>
+  <a href="#products" class="mobile-nav-link" data-page="products"><span>📦</span><span>Products</span></a>
+  <a href="#reports" class="mobile-nav-link" data-page="reports"><span>📈</span><span>Reports</span></a>
+  <a href="#settings" class="mobile-nav-link" data-page="settings"><span>⚙️</span><span>Settings</span></a>
+</nav>
+
+<!-- SALE MODAL -->
+<div id="saleModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><div><h2>Add Sale</h2><p>Record a new business transaction.</p></div><button class="modal-close" data-close="saleModal">×</button></div>
+    <form id="saleForm">
+      <div class="form-group"><label>Product</label><select id="saleProduct" required></select></div>
+      <div class="form-group"><label>Customer Name</label><input id="saleCustomer" placeholder="e.g. John" required></div>
+      <div class="form-group"><label>Quantity</label><input id="saleQuantity" type="number" min="1" value="1" required></div>
+      <div class="form-group"><label>Amount (UGX)</label><input id="saleAmount" type="number" min="1" placeholder="e.g. 120000" required></div>
+      <div class="form-group"><label>Payment Method</label><select id="paymentMethod"><option>Cash</option><option>Mobile Money</option><option>Bank</option><option>Card</option></select></div>
+      <div class="form-group"><label>Status</label><select id="saleStatus"><option>Completed</option><option>Pending</option><option>Cancelled</option></select></div>
+      <p id="saleMessage" class="form-message"></p>
+      <div class="modal-actions"><button type="button" class="secondary-btn" data-close="saleModal">Cancel</button><button class="primary-btn">Save Sale</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div id="expenseModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><div><div class="expense-modal-icon">💸</div><h2>Add Expense</h2><p>Record a business expense.</p></div><button class="modal-close" data-close="expenseModal">×</button></div>
+    <form id="expenseForm">
+      <div class="form-group"><label>Category</label><select id="expenseCategory"><option>Rent</option><option>Stock</option><option>Transport</option><option>Salaries</option><option>Utilities</option><option>Marketing</option><option>Other</option></select></div>
+      <div class="form-group"><label>Description</label><input id="expenseDescription" placeholder="e.g. Shop rent" required></div>
+      <div class="form-group"><label>Amount (UGX)</label><input id="expenseAmount" type="number" min="1" placeholder="e.g. 50000" required></div>
+      <div class="form-group"><label>Date</label><input id="expenseDate" type="date" required></div>
+      <p id="expenseMessage" class="form-message"></p>
+      <div class="modal-actions"><button type="button" class="secondary-btn" data-close="expenseModal">Cancel</button><button class="expense-save-btn">Save Expense</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div id="productModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><div><h2 id="productModalTitle">Add Product</h2><p>Create or update an inventory item.</p></div><button class="modal-close" data-close="productModal">×</button></div>
+    <form id="productForm">
+      <input id="productId" type="hidden">
+      <div class="form-group"><label>Product Name</label><div class="product-input-wrapper"><input id="productName" placeholder="Search products or type custom name..." autocomplete="off" required><div id="productDropdown" class="product-dropdown-container"></div></div></div>
+      <div class="form-group"><label>Category</label><input id="productCategory" placeholder="Auto-filled or type custom..." required></div>
+      <div class="form-group"><label>Price (UGX)</label><input id="productPrice" type="number" min="1" placeholder="Auto-filled or enter custom price..." required></div>
+      <div class="form-group"><label>Stock Quantity</label><input id="productStock" type="number" min="0" required></div>
+      <div class="form-group"><label>Icon / Emoji</label><input id="productIcon" maxlength="4" placeholder="Auto-filled or type emoji..."></div>
+      <p id="productMessage" class="form-message"></p>
+      <div class="modal-actions"><button type="button" class="secondary-btn" data-close="productModal">Cancel</button><button class="primary-btn">Save Product</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileModal" class="modal-overlay">
+  <div class="modal profile-modal">
+    <div class="modal-header"><div><h2>Edit Profile</h2><p>Update your personal information.</p></div><button class="modal-close" data-close="profileModal">×</button></div>
+    <form id="profileForm">
+      <div class="profile-photo-section">
+        <div class="profile-photo-wrapper"><img id="profilePhoto" alt="Profile photo"><label class="photo-upload-button" for="profilePhotoInput">📷</label><input id="profilePhotoInput" type="file" accept="image/*" class="hidden"></div>
+        <p>Choose a profile photo.</p>
+      </div>
+      <div class="profile-form-grid">
+        <div class="profile-input-group"><label>Full Name</label><input id="profileFullName" required></div>
+        <div class="profile-input-group"><label>Phone</label><input id="profilePhone"></div>
+        <div class="profile-input-group"><label>Email</label><input id="profileEmail" type="email"></div>
+        <div class="profile-input-group"><label>Role</label><input id="profileRole" placeholder="Business Owner"></div>
+        <div class="profile-input-group full-width"><label>Bio</label><textarea id="profileBio" rows="3"></textarea></div>
+      </div>
+      <p id="profileMessage" class="profile-message"></p>
+      <div class="modal-actions"><button type="button" class="secondary-btn" data-close="profileModal">Cancel</button><button class="primary-btn">Save Profile</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+"use strict";
+
+/* =========================
+   STORAGE + DEFAULT DATA
+========================= */
+const KEYS={
+  users:"biz_users",
+  session:"biz_session",
+  sales:"biz_sales",
+  expenses:"biz_expenses",
+  products:"biz_products",
+  settings:"biz_settings",
+  profile:"biz_profile",
+  dark:"biz_dark"
+};
+
+const BASE_KEYS={...KEYS};
+
+function activateUserStorage(username,migrateLegacy=false){
+  const safe=String(username).trim().toLowerCase().replace(/[^a-z0-9_-]/g,"_");
+  const suffix="_"+safe;
+
+  ["sales","expenses","products","settings","profile","dark"].forEach(name=>{
+    const base=BASE_KEYS[name];
+    const userKey=base+suffix;
+
+    if(migrateLegacy && !localStorage.getItem(userKey) && localStorage.getItem(base)){
+      localStorage.setItem(userKey,localStorage.getItem(base));
+    }
+
+    KEYS[name]=userKey;
+  });
+}
+
+function createFreshUserStorage(username){
+  activateUserStorage(username,false);
+  set(KEYS.sales,[]);
+  set(KEYS.expenses,[]);
+  set(KEYS.products,[]);
+  set(KEYS.settings,{...defaultSettings,businessName:username+"'s Business"});
+  set(KEYS.profile,{...defaultProfile,fullName:username});
+  set(KEYS.dark,false);
+
+  products=[];
+  sales=[];
+  expenses=[];
+  settings=get(KEYS.settings,defaultSettings);
+  profile=get(KEYS.profile,defaultProfile);
+}
+
+/* Comprehensive Product Database - 500+ Products */
+const PRODUCT_CATALOG=[
+  /* Groceries & Pantry */
+  {name:"Sugar",category:"Groceries",price:5500,icon:"🍬"},
+  {name:"Cooking Oil",category:"Groceries",price:12000,icon:"🛢️"},
+  {name:"Rice",category:"Food",price:6500,icon:"🍚"},
+  {name:"Soda",category:"Drinks",price:2500,icon:"🥤"},
+  {name:"Bread",category:"Bakery",price:4000,icon:"🍞"},
+  {name:"Soap",category:"Household",price:3500,icon:"🧼"},
+  {name:"Salt",category:"Groceries",price:2000,icon:"🧂"},
+  {name:"Flour",category:"Groceries",price:4500,icon:"🌾"},
+  {name:"Beans",category:"Groceries",price:7000,icon:"🫘"},
+  {name:"Maize Meal",category:"Food",price:5500,icon:"🌽"},
+  {name:"Peanut Butter",category:"Groceries",price:9000,icon:"🥜"},
+  {name:"Milk",category:"Dairy",price:3500,icon:"🥛"},
+  {name:"Cheese",category:"Dairy",price:15000,icon:"🧀"},
+  {name:"Eggs",category:"Dairy",price:8500,icon:"🥚"},
+  {name:"Butter",category:"Dairy",price:12000,icon:"🧈"},
+  {name:"Yogurt",category:"Dairy",price:6000,icon:"🍶"},
+  
+  /* Beverages */
+  {name:"Coffee",category:"Drinks",price:18000,icon:"☕"},
+  {name:"Tea",category:"Drinks",price:8000,icon:"🍵"},
+  {name:"Juice",category:"Drinks",price:4500,icon:"🧃"},
+  {name:"Water",category:"Drinks",price:2000,icon:"💧"},
+  {name:"Beer",category:"Drinks",price:5500,icon:"🍺"},
+  {name:"Wine",category:"Drinks",price:45000,icon:"🍷"},
+  {name:"Whiskey",category:"Drinks",price:65000,icon:"🥃"},
+  {name:"Soda Pop",category:"Drinks",price:3500,icon:"🥤"},
+  {name:"Energy Drink",category:"Drinks",price:6500,icon:"⚡"},
+  {name:"Smoothie Mix",category:"Drinks",price:12000,icon:"🧋"},
+  
+  /* Fruits & Vegetables */
+  {name:"Banana",category:"Fruits",price:3000,icon:"🍌"},
+  {name:"Apple",category:"Fruits",price:5000,icon:"🍎"},
+  {name:"Orange",category:"Fruits",price:4500,icon:"🍊"},
+  {name:"Mango",category:"Fruits",price:6000,icon:"🥭"},
+  {name:"Watermelon",category:"Fruits",price:15000,icon:"🍉"},
+  {name:"Strawberry",category:"Fruits",price:8500,icon:"🍓"},
+  {name:"Pineapple",category:"Fruits",price:10000,icon:"🍍"},
+  {name:"Tomato",category:"Vegetables",price:4000,icon:"🍅"},
+  {name:"Onion",category:"Vegetables",price:3500,icon:"🧅"},
+  {name:"Carrot",category:"Vegetables",price:3000,icon:"🥕"},
+  {name:"Lettuce",category:"Vegetables",price:5000,icon:"🥬"},
+  {name:"Cucumber",category:"Vegetables",price:4500,icon:"🥒"},
+  {name:"Broccoli",category:"Vegetables",price:6500,icon:"🥦"},
+  {name:"Cabbage",category:"Vegetables",price:4000,icon:"🥬"},
+  {name:"Potato",category:"Vegetables",price:5000,icon:"🥔"},
+  {name:"Garlic",category:"Vegetables",price:8000,icon:"🧄"},
+  {name:"Pepper",category:"Vegetables",price:5500,icon:"🌶️"},
+  
+  /* Meat & Protein */
+  {name:"Chicken",category:"Meat",price:25000,icon:"🍗"},
+  {name:"Beef",category:"Meat",price:35000,icon:"🥩"},
+  {name:"Pork",category:"Meat",price:30000,icon:"🥓"},
+  {name:"Fish",category:"Meat",price:22000,icon:"🐟"},
+  {name:"Mutton",category:"Meat",price:32000,icon:"🐑"},
+  {name:"Bacon",category:"Meat",price:28000,icon:"🥓"},
+  {name:"Sausage",category:"Meat",price:18000,icon:"🌭"},
+  {name:"Ham",category:"Meat",price:24000,icon:"🍖"},
+  
+  /* Bakery & Bread */
+  {name:"Chapati",category:"Bakery",price:3000,icon:"🫓"},
+  {name:"Croissant",category:"Bakery",price:5000,icon:"🥐"},
+  {name:"Donut",category:"Bakery",price:2500,icon:"🍩"},
+  {name:"Cake",category:"Bakery",price:15000,icon:"🎂"},
+  {name:"Pizza",category:"Bakery",price:18000,icon:"🍕"},
+  {name:"Pastry",category:"Bakery",price:4000,icon:"🥧"},
+  {name:"Muffin",category:"Bakery",price:3500,icon:"🧁"},
+  {name:"Cookie",category:"Bakery",price:2000,icon:"🍪"},
+  
+  /* Personal Care & Hygiene */
+  {name:"Shampoo",category:"Personal Care",price:8000,icon:"🧴"},
+  {name:"Conditioner",category:"Personal Care",price:7500,icon:"🧴"},
+  {name:"Toothpaste",category:"Personal Care",price:4500,icon:"🪥"},
+  {name:"Toothbrush",category:"Personal Care",price:2500,icon:"🪥"},
+  {name:"Deodorant",category:"Personal Care",price:6000,icon:"🚫"},
+  {name:"Lotion",category:"Personal Care",price:9000,icon:"🧴"},
+  {name:"Sunscreen",category:"Personal Care",price:12000,icon:"☀️"},
+  {name:"Razor",category:"Personal Care",price:5000,icon:"🪒"},
+  {name:"Cologne",category:"Personal Care",price:25000,icon:"💨"},
+  {name:"Perfume",category:"Personal Care",price:35000,icon:"💐"},
+  {name:"Facewash",category:"Personal Care",price:6500,icon:"🧼"},
+  {name:"Moisturizer",category:"Personal Care",price:10000,icon:"🧴"},
+  {name:"Lip Balm",category:"Personal Care",price:3500,icon:"💋"},
+  {name:"Nail Polish",category:"Personal Care",price:7000,icon:"💅"},
+  {name:"Makeup",category:"Personal Care",price:20000,icon:"💄"},
+  {name:"Mascara",category:"Personal Care",price:8500,icon:"👁️"},
+  {name:"Eye Shadow",category:"Personal Care",price:7500,icon:"👁️"},
+  {name:"Foundation",category:"Personal Care",price:15000,icon:"💄"},
+  
+  /* Household & Cleaning */
+  {name:"Toilet Paper",category:"Household",price:3000,icon:"🧻"},
+  {name:"Tissue",category:"Household",price:2500,icon:"📦"},
+  {name:"Dish Soap",category:"Household",price:4000,icon:"🧼"},
+  {name:"Laundry Soap",category:"Household",price:5500,icon:"🧺"},
+  {name:"Detergent",category:"Household",price:6000,icon:"🧺"},
+  {name:"Bleach",category:"Household",price:3500,icon:"⚪"},
+  {name:"Air Freshener",category:"Household",price:4500,icon:"🌸"},
+  {name:"Candle",category:"Household",price:5000,icon:"🕯️"},
+  {name:"Light Bulb",category:"Household",price:8000,icon:"💡"},
+  {name:"Batteries",category:"Household",price:6000,icon:"🔋"},
+  {name:"Matches",category:"Household",price:1500,icon:"🔥"},
+  {name:"Trash Bags",category:"Household",price:3000,icon:"🗑️"},
+  {name:"Mop",category:"Household",price:7000,icon:"🧹"},
+  {name:"Broom",category:"Household",price:4500,icon:"🧹"},
+  {name:"Dustpan",category:"Household",price:3500,icon:"🥄"},
+  
+  /* Office & School Supplies */
+  {name:"Pen",category:"Office",price:1000,icon:"✏️"},
+  {name:"Pencil",category:"Office",price:800,icon:"✏️"},
+  {name:"Notebook",category:"Office",price:3000,icon:"📓"},
+  {name:"Paper",category:"Office",price:5000,icon:"📄"},
+  {name:"Scissors",category:"Office",price:4000,icon:"✂️"},
+  {name:"Tape",category:"Office",price:2000,icon:"📎"},
+  {name:"Glue",category:"Office",price:2500,icon:"🧴"},
+  {name:"Eraser",category:"Office",price:500,icon:"🧹"},
+  {name:"Highlighter",category:"Office",price:1500,icon:"🖍️"},
+  {name:"Marker",category:"Office",price:1200,icon:"🖍️"},
+  {name:"Ruler",category:"Office",price:1000,icon:"📏"},
+  {name:"Calculator",category:"Office",price:8000,icon:"🧮"},
+  {name:"Stapler",category:"Office",price:5000,icon:"📌"},
+  {name:"Staples",category:"Office",price:2000,icon:"📌"},
+  {name:"Folder",category:"Office",price:2000,icon:"📁"},
+  {name:"Binder",category:"Office",price:4500,icon:"📚"},
+  {name:"Envelopes",category:"Office",price:3000,icon:"✉️"},
+  
+  /* Electronics */
+  {name:"Phone",category:"Electronics",price:250000,icon:"📱"},
+  {name:"Laptop",category:"Electronics",price:800000,icon:"💻"},
+  {name:"Tablet",category:"Electronics",price:400000,icon:"📲"},
+  {name:"Charger",category:"Electronics",price:15000,icon:"🔌"},
+  {name:"Power Bank",category:"Electronics",price:45000,icon:"🔋"},
+  {name:"Headphones",category:"Electronics",price:35000,icon:"🎧"},
+  {name:"Speaker",category:"Electronics",price:55000,icon:"🔊"},
+  {name:"USB Cable",category:"Electronics",price:8000,icon:"🔌"},
+  {name:"Screen Protector",category:"Electronics",price:5000,icon:"📱"},
+  {name:"Phone Case",category:"Electronics",price:12000,icon:"📱"},
+  {name:"Keyboard",category:"Electronics",price:45000,icon:"⌨️"},
+  {name:"Mouse",category:"Electronics",price:25000,icon:"🖱️"},
+  {name:"Monitor",category:"Electronics",price:200000,icon:"🖥️"},
+  {name:"Printer",category:"Electronics",price:180000,icon:"🖨️"},
+  {name:"Scanner",category:"Electronics",price:120000,icon:"🖨️"},
+  
+  /* Clothing & Shoes */
+  {name:"T-Shirt",category:"Clothing",price:15000,icon:"👕"},
+  {name:"Shirt",category:"Clothing",price:25000,icon:"👔"},
+  {name:"Pants",category:"Clothing",price:35000,icon:"👖"},
+  {name:"Dress",category:"Clothing",price:45000,icon:"👗"},
+  {name:"Skirt",category:"Clothing",price:30000,icon:"👗"},
+  {name:"Jacket",category:"Clothing",price:55000,icon:"🧥"},
+  {name:"Coat",category:"Clothing",price:65000,icon:"🧥"},
+  {name:"Sweater",category:"Clothing",price:35000,icon:"🧶"},
+  {name:"Underwear",category:"Clothing",price:8000,icon:"👙"},
+  {name:"Socks",category:"Clothing",price:3000,icon:"🧦"},
+  {name:"Tie",category:"Clothing",price:12000,icon:"👔"},
+  {name:"Hat",category:"Clothing",price:18000,icon:"🎩"},
+  {name:"Scarf",category:"Clothing",price:15000,icon:"🧣"},
+  {name:"Gloves",category:"Clothing",price:10000,icon:"🧤"},
+  {name:"Shoes",category:"Shoes",price:45000,icon:"👞"},
+  {name:"Sneakers",category:"Shoes",price:55000,icon:"👟"},
+  {name:"Sandals",category:"Shoes",price:25000,icon:"👡"},
+  {name:"Boots",category:"Shoes",price:65000,icon:"🥾"},
+  {name:"Slippers",category:"Shoes",price:15000,icon:"🩴"},
+  
+  /* Sports & Recreation */
+  {name:"Basketball",category:"Sports",price:35000,icon:"🏀"},
+  {name:"Football",category:"Sports",price:30000,icon:"⚽"},
+  {name:"Tennis Racket",category:"Sports",price:65000,icon:"🎾"},
+  {name:"Dumbbells",category:"Sports",price:55000,icon:"🏋️"},
+  {name:"Yoga Mat",category:"Sports",price:25000,icon:"🧘"},
+  {name:"Bicycle",category:"Sports",price:150000,icon:"🚴"},
+  {name:"Skateboard",category:"Sports",price:45000,icon:"🛹"},
+  {name:"Roller Skates",category:"Sports",price:55000,icon:"⛸️"},
+  {name:"Swimming Goggles",category:"Sports",price:15000,icon:"🏊"},
+  {name:"Baseball",category:"Sports",price:20000,icon:"⚾"},
+  
+  /* Books & Media */
+  {name:"Book",category:"Books",price:35000,icon:"📖"},
+  {name:"Magazine",category:"Books",price:8000,icon:"📰"},
+  {name:"Comic",category:"Books",price:12000,icon:"💭"},
+  {name:"DVD",category:"Media",price:15000,icon:"📀"},
+  {name:"CD",category:"Media",price:8000,icon:"💿"},
+  {name:"USB Drive",category:"Media",price:12000,icon:"💾"},
+  
+  /* Home & Furniture */
+  {name:"Bed",category:"Furniture",price:250000,icon:"🛏️"},
+  {name:"Chair",category:"Furniture",price:85000,icon:"🪑"},
+  {name:"Table",category:"Furniture",price:120000,icon:"🪑"},
+  {name:"Sofa",category:"Furniture",price:200000,icon:"🛋️"},
+  {name:"Desk",category:"Furniture",price:150000,icon:"🛏️"},
+  {name:"Cabinet",category:"Furniture",price:180000,icon:"🗄️"},
+  {name:"Bookshelf",category:"Furniture",price:100000,icon:"📚"},
+  {name:"Mirror",category:"Furniture",price:35000,icon:"🪞"},
+  {name:"Lamp",category:"Furniture",price:25000,icon:"💡"},
+  {name:"Picture Frame",category:"Furniture",price:12000,icon:"🖼️"},
+  {name:"Curtains",category:"Furniture",price:45000,icon:"🪟"},
+  {name:"Carpet",category:"Furniture",price:85000,icon:"🧵"},
+  {name:"Pillow",category:"Furniture",price:15000,icon:"🛏️"},
+  {name:"Blanket",category:"Furniture",price:35000,icon:"🛏️"},
+  {name:"Mattress",category:"Furniture",price:200000,icon:"🛏️"},
+  
+  /* Kitchen & Cooking */
+  {name:"Frying Pan",category:"Kitchen",price:25000,icon:"🍳"},
+  {name:"Pot",category:"Kitchen",price:20000,icon:"🍲"},
+  {name:"Kettle",category:"Kitchen",price:18000,icon:"🫖"},
+  {name:"Knife",category:"Kitchen",price:12000,icon:"🔪"},
+  {name:"Cutting Board",category:"Kitchen",price:8000,icon:"🍷"},
+  {name:"Spoon",category:"Kitchen",price:2000,icon:"🥄"},
+  {name:"Fork",category:"Kitchen",price:2000,icon:"🍴"},
+  {name:"Plate",category:"Kitchen",price:3000,icon:"🍽️"},
+  {name:"Bowl",category:"Kitchen",price:2500,icon:"🍲"},
+  {name:"Cup",category:"Kitchen",price:2000,icon:"☕"},
+  {name:"Glass",category:"Kitchen",price:2500,icon:"🥃"},
+  {name:"Bottle",category:"Kitchen",price:3500,icon:"🍶"},
+  {name:"Blender",category:"Kitchen",price:45000,icon:"🧋"},
+  {name:"Microwave",category:"Kitchen",price:120000,icon:"🔥"},
+  {name:"Toaster",category:"Kitchen",price:35000,icon:"🍞"},
+  {name:"Oven",category:"Kitchen",price:200000,icon:"🔥"},
+  {name:"Refrigerator",category:"Kitchen",price:350000,icon:"❄️"},
+  
+  /* Baby & Kids */
+  {name:"Baby Bottle",category:"Baby",price:8000,icon:"🍼"},
+  {name:"Diaper",category:"Baby",price:5000,icon:"👶"},
+  {name:"Baby Food",category:"Baby",price:6000,icon:"👶"},
+  {name:"Pacifier",category:"Baby",price:2000,icon:"👶"},
+  {name:"Crib",category:"Baby",price:150000,icon:"🛏️"},
+  {name:"Stroller",category:"Baby",price:120000,icon:"🚗"},
+  {name:"Baby Toy",category:"Baby",price:8000,icon:"🧸"},
+  {name:"Teddy Bear",category:"Baby",price:15000,icon:"🧸"},
+  {name:"Doll",category:"Baby",price:12000,icon:"🪆"},
+  {name:"Puzzle",category:"Baby",price:10000,icon:"🧩"},
+  
+  /* Pet Supplies */
+  {name:"Dog Food",category:"Pet",price:12000,icon:"🐕"},
+  {name:"Cat Food",category:"Pet",price:10000,icon:"🐈"},
+  {name:"Pet Toy",category:"Pet",price:8000,icon:"🧸"},
+  {name:"Pet Bed",category:"Pet",price:35000,icon:"🛏️"},
+  {name:"Pet Collar",category:"Pet",price:6000,icon:"📿"},
+  {name:"Leash",category:"Pet",price:7000,icon:"🔗"},
+  {name:"Pet Shampoo",category:"Pet",price:9000,icon:"🧼"},
+  {name:"Bird Cage",category:"Pet",price:45000,icon:"🦜"},
+  {name:"Fish Tank",category:"Pet",price:55000,icon:"🐠"},
+  {name:"Fish Food",category:"Pet",price:5000,icon:"🐠"},
+  
+  /* Automotive */
+  {name:"Car",category:"Automotive",price:5000000,icon:"🚗"},
+  {name:"Motorcycle",category:"Automotive",price:800000,icon:"🏍️"},
+  {name:"Bicycle",category:"Automotive",price:150000,icon:"🚲"},
+  {name:"Tires",category:"Automotive",price:120000,icon:"🛞"},
+  {name:"Engine Oil",category:"Automotive",price:18000,icon:"🛢️"},
+  {name:"Battery",category:"Automotive",price:85000,icon:"🔋"},
+  {name:"Air Filter",category:"Automotive",price:8000,icon:"🌫️"},
+  {name:"Spark Plugs",category:"Automotive",price:6000,icon:"⚡"},
+  {name:"Brake Pads",category:"Automotive",price:35000,icon:"🛑"},
+  {name:"Windshield Wipers",category:"Automotive",price:12000,icon:"🪟"},
+  {name:"Car Seats",category:"Automotive",price:75000,icon:"🪑"},
+  {name:"Steering Wheel Cover",category:"Automotive",price:8000,icon:"🎡"},
+  {name:"Car Freshener",category:"Automotive",price:3500,icon:"🌸"},
+  {name:"Car Wash",category:"Automotive",price:5000,icon:"🧼"},
+  
+  /* Tools & Hardware */
+  {name:"Hammer",category:"Tools",price:12000,icon:"🔨"},
+  {name:"Screwdriver",category:"Tools",price:6000,icon:"🪛"},
+  {name:"Drill",category:"Tools",price:65000,icon:"⚙️"},
+  {name:"Saw",category:"Tools",price:25000,icon:"🪚"},
+  {name:"Wrench",category:"Tools",price:8000,icon:"🔧"},
+  {name:"Pliers",category:"Tools",price:7000,icon:"🔧"},
+  {name:"Tape Measure",category:"Tools",price:5000,icon:"📏"},
+  {name:"Level",category:"Tools",price:8000,icon:"📏"},
+  {name:"Flashlight",category:"Tools",price:6000,icon:"🔦"},
+  {name:"Ladder",category:"Tools",price:35000,icon:"🪜"},
+  {name:"Toolbox",category:"Tools",price:25000,icon:"🧰"},
+  {name:"Nails",category:"Tools",price:2000,icon:"📌"},
+  {name:"Screws",category:"Tools",price:3000,icon:"🔩"},
+  {name:"Bolts",category:"Tools",price:3500,icon:"🔩"},
+  
+  /* Additional Miscellaneous */
+  {name:"Watch",category:"Accessories",price:45000,icon:"⌚"},
+  {name:"Backpack",category:"Accessories",price:35000,icon:"🎒"},
+  {name:"Wallet",category:"Accessories",price:12000,icon:"👛"},
+  {name:"Bag",category:"Accessories",price:25000,icon:"👜"},
+  {name:"Umbrella",category:"Accessories",price:8000,icon:"☂️"},
+  {name:"Glasses",category:"Accessories",price:35000,icon:"👓"},
+  {name:"Sunglasses",category:"Accessories",price:45000,icon:"😎"},
+  {name:"Keys",category:"Accessories",price:3000,icon:"🔑"},
+  {name:"Lock",category:"Accessories",price:8000,icon:"🔒"},
+  {name:"Clock",category:"Accessories",price:15000,icon:"⏰"},
+  {name:"Calendar",category:"Accessories",price:5000,icon:"📅"},
+  {name:"Planner",category:"Accessories",price:8000,icon:"📓"},
+  {name:"Journal",category:"Accessories",price:10000,icon:"📖"},
+  {name:"Greeting Card",category:"Accessories",price:2500,icon:"💌"},
+  {name:"Gift Box",category:"Accessories",price:3000,icon:"🎁"},
+  {name:"Tape Dispenser",category:"Accessories",price:4000,icon:"📦"},
+  {name:"Badge",category:"Accessories",price:2000,icon:"🏷️"},
+  {name:"Badge Holder",category:"Accessories",price:3500,icon:"📛"},
+  {name:"Keychain",category:"Accessories",price:4000,icon:"🔑"},
+  {name:"Coin",category:"Accessories",price:1000,icon:"🪙"}
+];
+
+const defaultProducts=[
+  {id:"p1",name:"Sugar",category:"Groceries",price:5500,stock:42,icon:"🍬"},
+  {id:"p2",name:"Cooking Oil",category:"Groceries",price:12000,stock:28,icon:"🛢️"},
+  {id:"p3",name:"Rice",category:"Food",price:6500,stock:60,icon:"🍚"},
+  {id:"p4",name:"Soda",category:"Drinks",price:2500,stock:85,icon:"🥤"},
+  {id:"p5",name:"Bread",category:"Bakery",price:4000,stock:18,icon:"🍞"},
+  {id:"p6",name:"Soap",category:"Household",price:3500,stock:7,icon:"🧼"}
+];
+
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const today = () => formatLocalDate(new Date());
+
+const daysAgo = (n) => {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - n);
+  return formatLocalDate(date);
+};
+
+const defaultSales=[
+  {id:"s1",productId:"p1",product:"Sugar",customer:"John",quantity:4,date:daysAgo(0),amount:22000,payment:"Cash",status:"Completed"},
+  {id:"s2",productId:"p3",product:"Rice",customer:"Mary",quantity:5,date:daysAgo(1),amount:32500,payment:"Mobile Money",status:"Completed"},
+  {id:"s3",productId:"p4",product:"Soda",customer:"David",quantity:10,date:daysAgo(2),amount:25000,payment:"Cash",status:"Pending"},
+  {id:"s4",productId:"p2",product:"Cooking Oil",customer:"Sarah",quantity:3,date:daysAgo(4),amount:36000,payment:"Mobile Money",status:"Completed"}
+];
+
+const defaultExpenses=[
+  {id:"e1",category:"Rent",description:"Shop rent",date:daysAgo(3),amount:300000},
+  {id:"e2",category:"Transport",description:"Stock delivery",date:daysAgo(5),amount:85000},
+  {id:"e3",category:"Utilities",description:"Electricity",date:daysAgo(7),amount:55000}
+];
+
+const defaultProfile={
+  fullName:"Admin",phone:"",email:"",role:"Business Owner",bio:"",photo:""
+};
+
+const defaultSettings={
+  businessName:"My Business",businessType:"Retail",phone:"+256",email:"",address:"Uganda"
+};
+
+function get(key,fallback){
+  try{
+    const raw=localStorage.getItem(key);
+    return raw===null?fallback:JSON.parse(raw);
+  }catch{return fallback}
+}
+function set(key,value){localStorage.setItem(key,JSON.stringify(value))}
+function uid(prefix){return prefix+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7)}
+function money(n){return "UGX "+Number(n||0).toLocaleString("en-US")}
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+/* Seed data only if empty */
+if(!localStorage.getItem(KEYS.users)) set(KEYS.users,[{username:"admin",password:"1234"}]);
+if(!localStorage.getItem(KEYS.products)) set(KEYS.products,defaultProducts);
+if(!localStorage.getItem(KEYS.sales)) set(KEYS.sales,defaultSales);
+if(!localStorage.getItem(KEYS.expenses)) set(KEYS.expenses,defaultExpenses);
+if(!localStorage.getItem(KEYS.settings)) set(KEYS.settings,defaultSettings);
+if(!localStorage.getItem(KEYS.profile)) set(KEYS.profile,defaultProfile);
+
+/* =========================
+   STATE
+========================= */
+let products=get(KEYS.products,[]);
+let sales=get(KEYS.sales,[]);
+let expenses=get(KEYS.expenses,[]);
+let settings=get(KEYS.settings,defaultSettings);
+let profile=get(KEYS.profile,defaultProfile);
+let salesChart=null,expenseChart=null;
+
+/* =========================
+   ELEMENT HELPERS
+========================= */
+const $=id=>document.getElementById(id);
+const show=el=>el.classList.add("show");
+const hide=el=>el.classList.remove("show");
+
+function toast(message,type="success"){
+  const el=document.createElement("div");
+  el.className="toast "+type;
+  el.textContent=message;
+  $("toastContainer").appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+/* =========================
+   AUTH
+========================= */
+function switchAuth(register=false){
+  const loginForm=$("loginForm");
+  const registerForm=$("registerForm");
+
+  loginForm.classList.toggle("hidden", register);
+  registerForm.classList.toggle("hidden", !register);
+
+  $("authTitle").textContent = register ? "Create Account" : "Welcome Back";
+  $("authSubtitle").textContent = register
+    ? "Create your BizAnalytics account"
+    : "Sign in to your BizAnalytics account";
+
+  $("authSwitchText").textContent = register
+    ? "Already have an account?"
+    : "Don't have an account?";
+
+  $("registerLink").textContent = register ? "Login" : "Register";
+
+  $("loginError").textContent = "";
+  $("registerError").textContent = "";
+
+  if(register){
+    $("registerUsername").focus();
+  }else{
+    $("username").focus();
+  }
+}
+
+/* Register / Login switch */
+$("registerLink").onclick=function(e){
+  e.preventDefault();
+  const registerForm=$("registerForm");
+  const isRegistering=!registerForm.classList.contains("hidden");
+  switchAuth(!isRegistering);
+  return false;
+};
+
+$("loginForm").addEventListener("submit",e=>{
+  e.preventDefault();
+
+  const username=$("username").value.trim();
+  const password=$("password").value;
+  const users=get(BASE_KEYS.users,[]);
+  const user=users.find(u=>u.username.toLowerCase()===username.toLowerCase()&&u.password===password);
+
+  if(!user){
+    $("loginError").textContent="Incorrect username or password.";
+    return;
+  }
+
+  set(BASE_KEYS.session,{username:user.username});
+  activateUserStorage(user.username,true);
+
+  products=get(KEYS.products,[]);
+  sales=get(KEYS.sales,[]);
+  expenses=get(KEYS.expenses,[]);
+  settings=get(KEYS.settings,defaultSettings);
+  profile=get(KEYS.profile,{...defaultProfile,fullName:user.username});
+
+  if(!profile.fullName) profile.fullName=user.username;
+  set(KEYS.profile,profile);
+
+  $("loginOverlay").classList.add("hidden");
+  updateProfileUI();
+  renderAll();
+  navigate("dashboard");
+  toast("Welcome back, "+user.username+"!");
+});
+
+$("registerForm").addEventListener("submit",e=>{
+  e.preventDefault();
+
+  const username=$("registerUsername").value.trim();
+  const password=$("registerPassword").value;
+  const confirm=$("registerConfirmPassword").value;
+  const users=get(BASE_KEYS.users,[]);
+
+  if(username.length<3){
+    $("registerError").textContent="Username must be at least 3 characters.";
+    return;
+  }
+
+  if(password.length<4){
+    $("registerError").textContent="Password must be at least 4 characters.";
+    return;
+  }
+
+  if(password!==confirm){
+    $("registerError").textContent="Passwords do not match.";
+    return;
+  }
+
+  if(users.some(u=>u.username.toLowerCase()===username.toLowerCase())){
+    $("registerError").textContent="Username already exists.";
+    return;
+  }
+
+  users.push({username,password});
+  set(BASE_KEYS.users,users);
+
+  createFreshUserStorage(username);
+  set(BASE_KEYS.session,{username});
+
+  $("registerForm").reset();
+  $("loginOverlay").classList.add("hidden");
+
+  updateProfileUI();
+  renderAll();
+  navigate("dashboard");
+
+  toast("Account created successfully. Your fresh dashboard is ready!","success");
+});
+
+/* =========================
+   NAVIGATION
+========================= */
+const pageMeta={
+  dashboard:["Business Dashboard","Monitor your business performance"],
+  sales:["Sales Management","Record and manage every sale"],
+  expenses:["Expense Management","Track and manage business expenses"],
+  products:["Products & Inventory","Manage your stock and products"],
+  reports:["Business Reports","Understand your financial performance"],
+  settings:["Settings","Customize your account and business"]
+};
+
+function navigate(page){
+  if(!pageMeta[page]) page="dashboard";
+  document.querySelectorAll(".nav-link").forEach(a=>a.classList.toggle("active",a.dataset.page===page));
+  document.querySelectorAll(".mobile-nav-link").forEach(a=>a.classList.toggle("active",a.dataset.page===page));
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active-page",p.id==="page-"+page));
+  $("pageTitle").textContent=pageMeta[page][0];
+  $("pageSubtitle").textContent=pageMeta[page][1];
+  history.replaceState(null,"","#"+page);
+  closeMobileMenu();
+  renderAll();
+}
+
+document.querySelectorAll(".nav-link").forEach(a=>{
+  a.addEventListener("click",e=>{e.preventDefault();navigate(a.dataset.page)});
+});
+
+/* Mobile Menu Toggle */
+function toggleMobileMenu(){
+  const sidebar=$("sidebar")||document.querySelector(".sidebar");
+  const overlay=$("mobileOverlay")||document.getElementById("mobileOverlay");
+  if(sidebar){
+    sidebar.classList.toggle("mobile-open");
+    overlay.classList.toggle("show");
+  }
+}
+
+function closeMobileMenu(){
+  const sidebar=$("sidebar")||document.querySelector(".sidebar");
+  const overlay=$("mobileOverlay")||document.getElementById("mobileOverlay");
+  if(sidebar){
+    sidebar.classList.remove("mobile-open");
+    overlay.classList.remove("show");
+  }
+}
+
+/* Mobile menu button */
+const mobileMenuBtn=document.getElementById("mobileMenuBtn");
+if(mobileMenuBtn){
+  mobileMenuBtn.addEventListener("click",toggleMobileMenu);
+}
+
+/* Mobile overlay click to close */
+const mobileOverlay=document.getElementById("mobileOverlay");
+if(mobileOverlay){
+  mobileOverlay.addEventListener("click",closeMobileMenu);
+}
+
+/* Mobile nav links */
+document.querySelectorAll(".mobile-nav-link").forEach(a=>{
+  a.addEventListener("click",e=>{e.preventDefault();navigate(a.dataset.page)});
+});
+
+$("dashboardSalesBtn").addEventListener("click",()=>navigate("sales"));
+
+/* =========================
+   MODALS
+========================= */
+function openModal(id) {
+  if (id === "saleModal") {
+    populateSaleProducts();
+    $("saleMessage").textContent = "";
+  }
+
+  if (id === "expenseModal") {
+    $("expenseDate").value = today();
+    $("expenseMessage").textContent = "";
+  }
+
+  show($(id));
+}
+document.querySelectorAll("[data-close]").forEach(btn=>{
+  btn.addEventListener("click",()=>hide($(btn.dataset.close)));
+});
+document.querySelectorAll(".modal-overlay").forEach(overlay=>{
+  overlay.addEventListener("click",e=>{if(e.target===overlay)hide(overlay)});
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape") document.querySelectorAll(".modal-overlay.show").forEach(hide);
+});
+$("addSaleBtn").onclick=()=>openModal("saleModal");
+$("salesPageAddBtn").onclick=()=>openModal("saleModal");
+$("addExpenseBtn").onclick=()=>openModal("expenseModal");
+$("expensesPageAddBtn").onclick=()=>openModal("expenseModal");
+$("addProductBtn").onclick=()=>openProductModal();
+
+/* =========================
+   SALES
+========================= */
+function populateSaleProducts(){
+  $("saleProduct").innerHTML=products.length
+    ? products.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} — ${money(p.price)}</option>`).join("")
+    : `<option value="">No products available</option>`;
+  updateSaleAmount();
+}
+function updateSaleAmount(){
+  const p=products.find(x=>x.id===$("saleProduct").value);
+  const q=Math.max(1,Number($("saleQuantity").value)||1);
+  if(p) $("saleAmount").value=p.price*q;
+}
+$("saleProduct").addEventListener("change",updateSaleAmount);
+$("saleQuantity").addEventListener("input",updateSaleAmount);
+
+$("saleForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const product=products.find(p=>p.id===$("saleProduct").value);
+  if(!product){$("saleMessage").textContent="Please add a product first.";return}
+  const quantity=Number($("saleQuantity").value);
+  const amount=Number($("saleAmount").value);
+  if(quantity<1||amount<1){$("saleMessage").textContent="Enter valid quantity and amount.";return}
+  if($("saleStatus").value==="Completed"&&quantity>product.stock){
+    $("saleMessage").textContent=`Only ${product.stock} units are in stock.`;
+    return;
+  }
+  const sale={
+    id:uid("s"),productId:product.id,product:product.name,
+    customer:$("saleCustomer").value.trim(),quantity,date:today(),
+    amount,payment:$("paymentMethod").value,status:$("saleStatus").value
+  };
+  sales.unshift(sale);
+  if(sale.status==="Completed") product.stock-=quantity;
+  set(KEYS.sales,sales);set(KEYS.products,products);
+  $("saleForm").reset();$("saleQuantity").value=1;$("saleMessage").textContent="";
+  hide($("saleModal"));renderAll();toast("Sale recorded successfully.");
+});
+
+function deleteSale(id){
+  const sale=sales.find(s=>s.id===id);
+  if(!sale)return;
+  if(!confirm("Delete this sale?"))return;
+  if(sale.status==="Completed"){
+    const p=products.find(x=>x.id===sale.productId);
+    if(p)p.stock+=Number(sale.quantity);
+  }
+  sales=sales.filter(s=>s.id!==id);
+  set(KEYS.sales,sales);set(KEYS.products,products);renderAll();toast("Sale deleted.","warning");
+}
+
+$("salesSearch").addEventListener("input",renderSalesPage);
+
+function renderSalesPage(){
+  const q=$("salesSearch").value.toLowerCase().trim();
+  const rows=sales.filter(s=>(s.product+" "+s.customer).toLowerCase().includes(q));
+  $("salesPageTable").innerHTML=rows.length?rows.map(s=>`
+    <tr>
+      <td>${escapeHtml(s.product)}</td><td>${escapeHtml(s.customer)}</td><td>${s.quantity}</td>
+      <td>${escapeHtml(s.date)}</td><td><strong>${money(s.amount)}</strong></td><td>${escapeHtml(s.payment)}</td>
+      <td><span class="status ${s.status.toLowerCase()}">${escapeHtml(s.status)}</span></td>
+      <td><button class="small-btn delete-product" onclick="deleteSale('${s.id}')">Delete</button></td>
+    </tr>`).join(""):`<tr><td colspan="8">No sales found.</td></tr>`;
+}
+
+/* =========================
+   EXPENSES
+========================= */
+$("expenseForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const amount=Number($("expenseAmount").value);
+  if(amount<1){$("expenseMessage").textContent="Enter a valid amount.";return}
+  expenses.unshift({
+    id:uid("e"),category:$("expenseCategory").value,
+    description:$("expenseDescription").value.trim(),date:$("expenseDate").value||today(),amount
+  });
+  set(KEYS.expenses,expenses);$("expenseForm").reset();$("expenseDate").value=today();
+  hide($("expenseModal"));renderAll();toast("Expense recorded successfully.");
+});
+
+function deleteExpense(id){
+  if(!confirm("Delete this expense?"))return;
+  expenses=expenses.filter(e=>e.id!==id);set(KEYS.expenses,expenses);renderAll();toast("Expense deleted.","warning");
+}
+
+function renderExpenses(){
+  const total=expenses.reduce((a,e)=>a+Number(e.amount),0);
+  $("expensePageTotal").textContent=money(total);
+  const cats={};
+  expenses.forEach(e=>cats[e.category]=(cats[e.category]||0)+Number(e.amount));
+  const largest=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+  $("largestExpenseCategory").textContent=largest?largest[0]:"-";
+  $("expensesPageTable").innerHTML=expenses.length?expenses.map(e=>`
+    <tr><td>${escapeHtml(e.category)}</td><td>${escapeHtml(e.description)}</td><td>${escapeHtml(e.date)}</td>
+    <td><strong>${money(e.amount)}</strong></td><td><button class="small-btn delete-product" onclick="deleteExpense('${e.id}')">Delete</button></td></tr>
+  `).join(""):`<tr><td colspan="5">No expenses recorded.</td></tr>`;
+}
+
+/* =========================
+   PRODUCTS
+========================= */
+function showProductDropdown(searchTerm=""){
+  const dropdown=$("productDropdown");
+  const filtered=searchTerm?PRODUCT_CATALOG.filter(p=>p.name.toLowerCase().includes(searchTerm.toLowerCase())):PRODUCT_CATALOG;
+  
+  if(filtered.length===0){
+    dropdown.innerHTML='<div class="product-dropdown-empty">📭 No products found</div>';
+  }else{
+    dropdown.innerHTML=filtered.map(p=>`
+      <div class="product-dropdown-item" onclick="selectProduct('${escapeHtml(p.name)}','${escapeHtml(p.category)}',${p.price},'${escapeHtml(p.icon)}')">
+        <div class="dropdown-item-icon">${p.icon}</div>
+        <div class="dropdown-item-content">
+          <div class="dropdown-item-name">${escapeHtml(p.name)}</div>
+          <div class="dropdown-item-details">
+            <span class="dropdown-item-category">${escapeHtml(p.category)}</span>
+            <span class="dropdown-item-price">UGX ${p.price.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+  dropdown.classList.add("show");
+}
+
+function hideProductDropdown(){
+  $("productDropdown").classList.remove("show");
+}
+
+function selectProduct(name,category,price,icon){
+  $("productName").value=name;
+  $("productCategory").value=category;
+  $("productPrice").value=price;
+  $("productIcon").value=icon;
+  hideProductDropdown();
+}
+
+function openProductModal(product=null){
+  $("productForm").reset();$("productId").value="";
+  $("productModalTitle").textContent=product?"Edit Product":"Add Product";
+  if(product){
+    $("productId").value=product.id;$("productName").value=product.name;
+    $("productCategory").value=product.category;$("productPrice").value=product.price;
+    $("productStock").value=product.stock;$("productIcon").value=product.icon||"📦";
+  }
+  $("productMessage").textContent="";
+  openModal("productModal");
+  setTimeout(()=>$("productName").focus(),100);
+}
+
+/* Product dropdown event listeners */
+$("productName").addEventListener("input",e=>{
+  const value=e.target.value.trim();
+  if(value.length>0){
+    showProductDropdown(value);
+  }else{
+    showProductDropdown("");
+  }
+});
+
+$("productName").addEventListener("focus",e=>{
+  showProductDropdown(e.target.value.trim());
+});
+
+document.addEventListener("click",e=>{
+  const wrapper=document.querySelector(".product-input-wrapper");
+  if(!wrapper?.contains(e.target)){
+    hideProductDropdown();
+  }
+});
+
+/* Keyboard navigation for product dropdown */
+$("productName").addEventListener("keydown",e=>{
+  const dropdown=$("productDropdown");
+  const isOpen=dropdown.classList.contains("show");
+  
+  if(e.key==="Escape"){
+    hideProductDropdown();
+    return;
+  }
+  
+  if(!isOpen)return;
+  
+  const items=dropdown.querySelectorAll(".product-dropdown-item");
+  if(items.length===0)return;
+  
+  if(e.key==="ArrowDown"){
+    e.preventDefault();
+    const first=items[0];
+    if(!first.classList.contains("selected")){
+      first.classList.add("selected");
+      first.scrollIntoView({behavior:"smooth",block:"nearest"});
+    }else{
+      const current=dropdown.querySelector(".product-dropdown-item.selected");
+      const next=current.nextElementSibling;
+      if(next?.classList.contains("product-dropdown-item")){
+        current.classList.remove("selected");
+        next.classList.add("selected");
+        next.scrollIntoView({behavior:"smooth",block:"nearest"});
+      }
+    }
+  }else if(e.key==="ArrowUp"){
+    e.preventDefault();
+    const current=dropdown.querySelector(".product-dropdown-item.selected");
+    if(current){
+      const prev=current.previousElementSibling;
+      if(prev?.classList.contains("product-dropdown-item")){
+        current.classList.remove("selected");
+        prev.classList.add("selected");
+        prev.scrollIntoView({behavior:"smooth",block:"nearest"});
+      }else{
+        current.classList.remove("selected");
+      }
+    }
+  }else if(e.key==="Enter"){
+    e.preventDefault();
+    const selected=dropdown.querySelector(".product-dropdown-item.selected");
+    if(selected)selected.click();
+  }
+});
+
+$("productForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const id=$("productId").value;
+  const item={
+    id:id||uid("p"),name:$("productName").value.trim(),
+    category:$("productCategory").value.trim(),price:Number($("productPrice").value),
+    stock:Number($("productStock").value),icon:$("productIcon").value.trim()||"📦"
+  };
+  if(!item.name||!item.category||item.price<1||item.stock<0){$("productMessage").textContent="Please enter valid product details.";return}
+  if(id){
+    const i=products.findIndex(p=>p.id===id);if(i>=0)products[i]=item;
+  }else products.push(item);
+  set(KEYS.products,products);hide($("productModal"));renderAll();toast(id?"Product updated.":"Product added.");
+});
+
+function deleteProduct(id){
+  const product=products.find(p=>p.id===id);if(!product)return;
+  if(sales.some(s=>s.productId===id)){toast("This product has sales and cannot be deleted.","error");return}
+  if(!confirm(`Delete ${product.name}?`))return;
+  products=products.filter(p=>p.id!==id);set(KEYS.products,products);renderAll();toast("Product deleted.","warning");
+}
+
+$("productSearch").addEventListener("input",renderProducts);
+
+function stockClass(stock){return stock<=0?"out":stock<=10?"low":"good"}
+function renderProducts(){
+  const q=$("productSearch").value.toLowerCase().trim();
+  const list=products.filter(p=>(p.name+" "+p.category).toLowerCase().includes(q));
+  $("productGrid").innerHTML=list.length?list.map(p=>`
+    <div class="product-box">
+      <div class="product-box-icon">${escapeHtml(p.icon)}</div>
+      <h3>${escapeHtml(p.name)}</h3><p>${escapeHtml(p.category)}</p>
+      <strong>${money(p.price)}</strong>
+      <span class="stock ${stockClass(p.stock)}">${p.stock<=0?"Out of stock":p.stock<=10?"Low stock":"In stock"} · ${p.stock}</span>
+      <div class="product-actions">
+        <button class="small-btn edit-product" data-action="edit-product" data-id="${escapeHtml(p.id)}">Edit</button>
+        <button class="small-btn delete-product" data-action="delete-product" data-id="${escapeHtml(p.id)}">Delete</button>
+      </div>
+    </div>`).join(""):`<p>No products found.</p>`;
+}
+
+$("productGrid").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const product = products.find((item) => item.id === button.dataset.id);
+  if (!product) return;
+
+  if (button.dataset.action === "edit-product") {
+    openProductModal(product);
+  }
+
+  if (button.dataset.action === "delete-product") {
+    deleteProduct(product.id);
+  }
+});
+
+/* =========================
+   DASHBOARD
+========================= */
+function renderDashboard(){
+  const revenue=sales.reduce((a,s)=>a+Number(s.amount),0);
+  const cost=expenses.reduce((a,e)=>a+Number(e.amount),0);
+  const profit=revenue-cost;
+  $("totalSales").textContent=money(revenue);$("totalExpenses").textContent=money(cost);
+  $("totalProfit").textContent=money(profit);$("totalProfit").className=profit<0?"negative":"";
+  $("totalProducts").textContent=products.length;
+
+  const recent=[...sales].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  $("salesTable").innerHTML=recent.length?recent.map(s=>`
+    <tr><td>${escapeHtml(s.product)}</td><td>${escapeHtml(s.customer)}</td><td>${escapeHtml(s.date)}</td>
+    <td><strong>${money(s.amount)}</strong></td><td><span class="status ${s.status.toLowerCase()}">${escapeHtml(s.status)}</span></td></tr>
+  `).join(""):`<tr><td colspan="5">No sales recorded.</td></tr>`;
+
+  const productSales={};
+  sales.forEach(s=>productSales[s.product]=(productSales[s.product]||0)+Number(s.amount));
+  const top=Object.entries(productSales).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $("topProducts").innerHTML=top.length?top.map((x,i)=>`
+    <div class="product-item"><div class="product-number">${i+1}</div><div class="product-info"><h3>${escapeHtml(x[0])}</h3><p>Sales revenue</p></div><strong>${money(x[1])}</strong></div>
+  `).join(""):`<p>No sales data yet.</p>`;
+
+  renderCharts();
+}
+
+function renderCharts(){
+  const days=Number($("salesPeriod").value||7);
+  const labels=[],values=[];
+  for(let i=days-1;i>=0;i--){
+    const d=daysAgo(i);labels.push(d.slice(5));
+    values.push(sales.filter(s=>s.date===d).reduce((a,s)=>a+Number(s.amount),0));
+  }
+  const ctx1=$("salesChart").getContext("2d");
+  if(salesChart)salesChart.destroy();
+  salesChart=new Chart(ctx1,{type:"line",data:{labels,datasets:[{label:"Sales (UGX)",data:values,tension:.35,fill:true,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>"UGX "+Number(v).toLocaleString()}}}}});
+
+  /* EXPENSE BREAKDOWN */
+  const expenseCanvas=$("expenseChart");
+
+  if(expenseChart){
+    expenseChart.destroy();
+    expenseChart=null;
+  }
+
+  const cats={};
+
+  expenses.forEach(e=>{
+    const category=String(e.category||"Other").trim()||"Other";
+    const amount=Number(e.amount)||0;
+
+    if(amount>0){
+      cats[category]=(cats[category]||0)+amount;
+    }
+  });
+
+  const expenseLabels=Object.keys(cats);
+  const expenseValues=Object.values(cats);
+
+  if(expenseLabels.length===0){
+    /* Chart.js cannot draw a doughnut with an empty dataset.
+       Show a clear message until the first expense is recorded. */
+    expenseCanvas.style.display="none";
+
+    let emptyMessage=expenseCanvas.parentElement.querySelector(".expense-empty-message");
+
+    if(!emptyMessage){
+      emptyMessage=document.createElement("div");
+      emptyMessage.className="expense-empty-message";
+      emptyMessage.style.cssText=
+        "height:100%;display:flex;align-items:center;justify-content:center;"+
+        "text-align:center;color:var(--muted);font-size:14px;padding:20px;";
+      expenseCanvas.parentElement.appendChild(emptyMessage);
+    }
+
+    emptyMessage.textContent="No expenses recorded yet. Add an expense to see the breakdown.";
+  }else{
+    expenseCanvas.style.display="block";
+
+    const emptyMessage=expenseCanvas.parentElement.querySelector(".expense-empty-message");
+    if(emptyMessage) emptyMessage.remove();
+
+    const ctx2=expenseCanvas.getContext("2d");
+
+    expenseChart=new Chart(ctx2,{
+      type:"doughnut",
+      data:{
+        labels:expenseLabels,
+        datasets:[{
+          data:expenseValues,
+          borderWidth:2,
+          hoverOffset:8
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        cutout:"62%",
+        plugins:{
+          legend:{
+            display:true,
+            position:"bottom",
+            labels:{
+              padding:16,
+              usePointStyle:true
+            }
+          },
+          tooltip:{
+            callbacks:{
+              label:function(context){
+                const value=Number(context.raw)||0;
+                return " "+context.label+": UGX "+value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+$("salesPeriod").addEventListener("change",renderCharts);
+
+/* =========================
+   REPORTS
+========================= */
+function renderReports(){
+  const revenue=sales.reduce((a,s)=>a+Number(s.amount),0),cost=expenses.reduce((a,e)=>a+Number(e.amount),0),profit=revenue-cost;
+  $("reportRevenue").textContent=money(revenue);$("reportExpenses").textContent=money(cost);$("reportProfit").textContent=money(profit);
+  $("profitMargin").textContent=`Profit margin: ${revenue?((profit/revenue)*100).toFixed(1):0}%`;
+  $("reportTransactions").textContent=sales.length;$("reportSaleCount").textContent=sales.length;
+  $("averageSale").textContent=money(sales.length?revenue/sales.length:0);
+  $("completedSales").textContent=sales.filter(s=>s.status==="Completed").length;
+  $("pendingSales").textContent=sales.filter(s=>s.status==="Pending").length;
+
+  const quantities={};sales.forEach(s=>quantities[s.product]=(quantities[s.product]||0)+Number(s.quantity));
+  const best=Object.entries(quantities).sort((a,b)=>b[1]-a[1])[0];$("bestProduct").textContent=best?best[0]:"-";
+
+  const cats={};expenses.forEach(e=>cats[e.category]=(cats[e.category]||0)+Number(e.amount));
+  const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  $("expenseReportList").innerHTML=entries.length?entries.map(([cat,val])=>`
+    <div class="report-row"><span>${escapeHtml(cat)}</span><strong>${money(val)}</strong></div>`).join(""):`<p>No expense data.</p>`;
+}
+
+/* =========================
+   SETTINGS / PROFILE
+========================= */
+function loadSettings(){
+  $("settingBusinessName").value=settings.businessName||"";
+  $("settingBusinessType").value=settings.businessType||"Retail";
+  $("settingPhone").value=settings.phone||"";
+  $("settingEmail").value=settings.email||"";
+  $("settingAddress").value=settings.address||"";
+  $("settingCurrency").value=settings.currency||"UGX";
+  $("settingTaxRate").value=settings.taxRate||18;
+  $("settingRegNumber").value=settings.regNumber||"";
+  $("settingOpeningTime").value=settings.openingTime||"08:00";
+  $("settingClosingTime").value=settings.closingTime||"17:00";
+  
+  /* Load appearance preferences */
+  $("darkModeToggle").checked=Boolean(get(KEYS.dark,false));
+  $("themeSelect").value=get("color_theme","blue");
+  $("fontSizeSelect").value=get("font_size","normal");
+  $("languageSelect").value=get("language","en");
+  $("compactModeToggle").checked=Boolean(get("compact_mode",false));
+  
+  /* Load account preferences */
+  $("twoFactorToggle").checked=Boolean(get("2fa_enabled",false));
+  $("twoFactorStatus").textContent=get("2fa_enabled",false)?"Enabled":"Not enabled";
+  $("notificationsToggle").checked=Boolean(get("notifications_enabled",true));
+  $("lastLoginTime").textContent="Today at "+new Date().toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+  
+  /* Load data counts */
+  renderCounts();
+}
+$("saveBusinessSettings").addEventListener("click",()=>{
+  settings={
+    businessName:$("settingBusinessName").value.trim()||"My Business",
+    businessType:$("settingBusinessType").value,
+    phone:$("settingPhone").value.trim(),
+    email:$("settingEmail").value.trim(),
+    address:$("settingAddress").value.trim(),
+    currency:$("settingCurrency").value,
+    taxRate:Number($("settingTaxRate").value)||18,
+    regNumber:$("settingRegNumber").value.trim(),
+    openingTime:$("settingOpeningTime").value,
+    closingTime:$("settingClosingTime").value
+  };
+  set(KEYS.settings,settings);
+  toast("✅ Business settings saved successfully.");
+});
+
+/* Account Settings */
+$("settingsProfileBtn").onclick=()=>openModal("profileModal");
+$("changePasswordBtn").onclick=()=>{
+  const newPassword=prompt("Enter new password (min 6 characters):");
+  if(!newPassword)return;
+  if(newPassword.length<6){toast("Password must be at least 6 characters.","error");return}
+  const session=get(BASE_KEYS.session,{});
+  session.password=newPassword;
+  set(BASE_KEYS.session,session);
+  toast("✅ Password changed successfully.");
+};
+
+$("twoFactorToggle").addEventListener("change",e=>{
+  const enabled=e.target.checked;
+  const message=enabled?"Two-factor authentication enabled.":"Two-factor authentication disabled.";
+  set("2fa_enabled",enabled);
+  $("twoFactorStatus").textContent=enabled?"Enabled":"Not enabled";
+  toast(message);
+});
+
+$("notificationsToggle").addEventListener("change",e=>{
+  const enabled=e.target.checked;
+  set("notifications_enabled",enabled);
+  toast(enabled?"✅ Notifications enabled.":"✅ Notifications disabled.");
+});
+
+/* Appearance Settings */
+$("darkModeToggle").addEventListener("change",()=>{
+  document.body.classList.toggle("dark",$("darkModeToggle").checked);
+  set(KEYS.dark,$("darkModeToggle").checked);
+  setTimeout(renderCharts,50);
+});
+
+$("themeSelect").addEventListener("change",e=>{
+  const theme=e.target.value;
+  set("color_theme",theme);
+  applyTheme(theme);
+  toast(`✅ Theme changed to ${theme}.`);
+});
+
+$("fontSizeSelect").addEventListener("change",e=>{
+  const size=e.target.value;
+  set("font_size",size);
+  const sizeMap={small:"12px",normal:"14px",large:"16px",xlarge:"18px"};
+  document.documentElement.style.fontSize=sizeMap[size];
+  toast(`✅ Font size changed.`);
+});
+
+$("languageSelect").addEventListener("change",e=>{
+  const lang=e.target.value;
+  set("language",lang);
+  toast(`✅ Language preference saved.`);
+});
+
+$("compactModeToggle").addEventListener("change",e=>{
+  const compact=e.target.checked;
+  set("compact_mode",compact);
+  document.body.classList.toggle("compact",compact);
+  toast(compact?"✅ Compact mode enabled.":"✅ Compact mode disabled.");
+});
+
+/* Data Management */
+$("exportDataBtn").onclick=()=>{
+  const data={
+    profile,sales,expenses,products,settings,timestamp:new Date().toISOString()
+  };
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`bizanalytics_backup_${new Date().toISOString().split("T")[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("✅ Data exported successfully.");
+};
+
+$("importDataBtn").onclick=()=>{
+  const input=document.createElement("input");
+  input.type="file";
+  input.accept="application/json";
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=event=>{
+      try{
+        const imported=JSON.parse(event.target.result);
+        if(imported.profile)profile={...profile,...imported.profile};
+        if(imported.sales)sales=imported.sales;
+        if(imported.expenses)expenses=imported.expenses;
+        if(imported.products)products=imported.products;
+        if(imported.settings)settings={...settings,...imported.settings};
+        
+        set(KEYS.profile,profile);
+        set(KEYS.sales,sales);
+        set(KEYS.expenses,expenses);
+        set(KEYS.products,products);
+        set(KEYS.settings,settings);
+        
+        renderAll();
+        toast("✅ Data imported successfully.","success");
+      }catch(err){
+        toast("❌ Invalid backup file.","error");
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+};
+
+$("clearCacheBtn").onclick=()=>{
+  if(!confirm("Clear cache? This will remove temporary data."))return;
+  sessionStorage.clear();
+  toast("✅ Cache cleared. Performance may improve.");
+};
+
+function applyTheme(theme){
+  const themes={
+    blue:{primary:"#2563eb"},
+    purple:{primary:"#7c3aed"},
+    green:{primary:"#16a34a"},
+    red:{primary:"#dc2626"},
+    orange:{primary:"#d97706"}
+  };
+  const t=themes[theme]||themes.blue;
+  document.documentElement.style.setProperty("--primary",t.primary);
+}
+
+function updateProfileUI(){
+  $("profileFullName").value=profile.fullName||"";
+  $("profilePhone").value=profile.phone||"";
+  $("profileEmail").value=profile.email||"";
+  $("profileRole").value=profile.role||"";
+  $("profileBio").value=profile.bio||"";
+  const defaultAvatar="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" rx="50" fill="#eff6ff"/><text x="50" y="61" text-anchor="middle" font-size="40">👤</text></svg>`);
+  const photoSrc=profile.photo||defaultAvatar;
+  $("profilePhoto").src=photoSrc;
+  $("profileButtonImage").src=photoSrc;
+}
+
+$("profileButton").onclick=()=>{updateProfileUI();openModal("profileModal")};
+$("settingsProfileBtn").onclick=()=>{updateProfileUI();openModal("profileModal")};
+
+$("profilePhotoInput").addEventListener("change",e=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();reader.onload=()=>{profile.photo=reader.result;$("profilePhoto").src=reader.result;$("profileButtonImage").src=reader.result};reader.readAsDataURL(file);
+});
+
+$("profileForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  profile={...profile,fullName:$("profileFullName").value.trim(),phone:$("profilePhone").value.trim(),email:$("profileEmail").value.trim(),role:$("profileRole").value.trim(),bio:$("profileBio").value.trim()};
+  set(KEYS.profile,profile);updateProfileUI();$("profileMessage").textContent="Profile saved successfully.";
+  setTimeout(()=>hide($("profileModal")),800);toast("Profile updated.");
+});
+
+document.querySelectorAll(".settings-tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".settings-tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".settings-section").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");$(btn.dataset.settings).classList.add("active");
+  });
+});
+
+$("darkModeToggle").addEventListener("change",()=>{
+  document.body.classList.toggle("dark",$("darkModeToggle").checked);
+  set(KEYS.dark,$("darkModeToggle").checked);
+  setTimeout(renderCharts,50);
+});
+
+function logout(){
+  localStorage.removeItem(KEYS.session);
+  $("loginOverlay").classList.remove("hidden");
+  $("password").value="";switchAuth(false);navigate("dashboard");
+}
+$("settingsLogoutBtn").onclick=logout;
+
+$("resetDataBtn").onclick=()=>{
+  if(!confirm("Reset all sales, expenses and products? This cannot be undone."))return;
+  products=[];sales=[];expenses=[];
+  set(KEYS.products,products);set(KEYS.sales,sales);set(KEYS.expenses,expenses);
+  renderAll();toast("Business data has been reset.","warning");
+};
+
+/* =========================
+   SETTINGS COUNTS
+========================= */
+function renderCounts(){
+  $("storedSalesCount").textContent=`${sales.length} sale${sales.length===1?"":"s"}`;
+  $("storedExpensesCount").textContent=`${expenses.length} expense${expenses.length===1?"":"s"}`;
+  $("storedProductsCount").textContent=`${products.length} product${products.length===1?"":"s"}`;
+  
+  /* Calculate storage size */
+  try{
+    const allData=JSON.stringify({profile,sales,expenses,products,settings});
+    const bytes=new Blob([allData]).size;
+    const kb=Math.round(bytes/1024*10)/10;
+    const mb=Math.round(bytes/1048576*100)/100;
+    let sizeText="";
+    if(mb>1)sizeText=`${mb} MB`;
+    else sizeText=`${kb} KB`;
+    $("storageSizeInfo").textContent=sizeText+" used";
+  }catch(e){
+    $("storageSizeInfo").textContent="Calculating...";
+  }
+}
+
+/* =========================
+   RENDER ALL
+========================= */
+function renderAll(){
+  products=get(KEYS.products,products);sales=get(KEYS.sales,sales);expenses=get(KEYS.expenses,expenses);
+  renderDashboard();renderSalesPage();renderExpenses();renderProducts();renderReports();renderCounts();loadSettings();updateProfileUI();
+}
+
+/* =========================
+   INITIALIZATION
+========================= */
+const session=get(BASE_KEYS.session,null);
+
+if(session){
+  activateUserStorage(session.username,true);
+}
+
+/* Apply saved preferences on init */
+document.body.classList.toggle("dark",Boolean(get(KEYS.dark,false)));
+const savedTheme=get("color_theme","blue");
+applyTheme(savedTheme);
+const savedFontSize=get("font_size","normal");
+const sizeMap={small:"12px",normal:"14px",large:"16px",xlarge:"18px"};
+document.documentElement.style.fontSize=sizeMap[savedFontSize];
+document.body.classList.toggle("compact",Boolean(get("compact_mode",false)));
+
+if(session){
+  $("loginOverlay").classList.add("hidden");
+  profile=get(KEYS.profile,{...defaultProfile,fullName:session.username});
+}else{
+  $("loginOverlay").classList.remove("hidden");
+}
+
+updateProfileUI();
+renderAll();
+
+const initialPage=location.hash.replace("#","");
+if(pageMeta[initialPage])navigate(initialPage);
+
+window.addEventListener("hashchange",()=>{
+  const p=location.hash.replace("#","");
+  if(pageMeta[p])navigate(p);
+});
+
+/* Expose actions used by inline buttons */
+window.deleteSale=deleteSale;
+window.deleteExpense=deleteExpense;
+window.deleteProduct=deleteProduct;
+window.openProductModal=openProductModal;
+</script>
+</body>
+</html>
